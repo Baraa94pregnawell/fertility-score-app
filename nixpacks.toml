@@ -1,0 +1,9 @@
+[phases.build]
+cmds = [
+  "npm ci",
+  "npx prisma generate",
+  "npm run build"
+]
+
+[start]
+cmd = "node node_modules/next/dist/bin/next start"
