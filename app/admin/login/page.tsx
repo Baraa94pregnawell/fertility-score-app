@@ -14,13 +14,12 @@ export default function AdminLogin() {
     setLoading(true)
     setError('')
 
-    // Simple: test token against admin API
-    const res = await fetch('/api/admin/tokens', {
+    // Verify secret against dedicated verify endpoint (no DB dependency)
+    const res = await fetch('/api/admin/verify', {
       headers: { 'x-admin-secret': password },
     })
 
     if (res.ok) {
-      // Store in sessionStorage
       sessionStorage.setItem('admin_secret', password)
       router.push('/admin')
     } else {
