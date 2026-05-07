@@ -3,25 +3,53 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --purple-deep: #3D2870;
+  --rose-dusty: #C06078;
+  --bg-cream: #FDFAF8;
+  --text-dark: #1A1325;
+  --teal: #0D9488;
+  --emerald: #059669;
+  --amber: #D97706;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-cream);
+  color: var(--text-dark);
+  font-family: 'IBM Plex Arabic', 'Segoe UI', Arial, sans-serif;
+  direction: rtl;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* RTL number inputs */
+input[type="number"] {
+  direction: ltr;
+  text-align: center;
+}
+
+/* Selection color */
+::selection {
+  background-color: #C06078;
+  color: white;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #C06078;
+  border-radius: 3px;
 }

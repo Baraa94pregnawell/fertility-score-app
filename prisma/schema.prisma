@@ -1,0 +1,44 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model AccessToken {
+  id          String   @id @default(cuid())
+  token       String   @unique @default(uuid())
+  userEmail   String
+  userName    String?
+  source      String   @default("ghl")
+  createdAt   DateTime @default(now())
+  usedAt      DateTime?
+  isRevoked   Boolean  @default(false)
+  submissions QuestionnaireSubmission[]
+}
+
+model QuestionnaireSubmission {
+  id          String   @id @default(cuid())
+  tokenId     String
+  answers     String
+  submittedAt DateTime @default(now())
+  token       AccessToken @relation(fields: [tokenId], references: [id])
+  report      Report?
+}
+
+model Report {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  submissionId      String   @unique
+  userEmail         String
+  userName          String?
+  fertilityScore    Int
+  scoreCategory     String
+  sectionScores     String
+  reportContent     String
+  generatedAt       DateTime @default(now())
+  ghlWebhookSentAt  DateTime?
+  submission        QuestionnaireSubmission @relation(fields: [submissionId], references: [id])
+}

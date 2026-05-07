@@ -9,8 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        'purple-deep': '#3D2870',
+        'rose-dusty': '#C06078',
+        'bg-cream': '#FDFAF8',
+        'text-dark': '#1A1325',
+      },
+      fontFamily: {
+        arabic: ['IBM Plex Arabic', 'Arial', 'sans-serif'],
       },
     },
   },
