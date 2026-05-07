@@ -40,8 +40,6 @@ export default function ScoreGauge({ score, scoreCategory, scoreCategoryAr }: Pr
   const radius = 80
   const cx = 100
   const cy = 100
-  const startAngle = 180
-  const endAngle = 0
   const totalArc = 180
   const scoreArc = (displayScore / 100) * totalArc
 

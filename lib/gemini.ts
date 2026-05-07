@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
-import type { Answers } from './scoring'
+import type { Answers, SectionScores } from './scoring'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -41,7 +41,7 @@ export interface ReportNarrative {
 export async function generateReport(input: {
   score: number
   scoreCategoryAr: string
-  sectionScores: Record<string, number>
+  sectionScores: SectionScores
   answers: Answers
   age: string
   bmi: number

@@ -1,12 +1,11 @@
 [variables]
 NODE_VERSION = "20"
 
+[phases.install]
+cmds = ["npm ci"]
+
 [phases.build]
-cmds = [
-  "npm ci",
-  "npx prisma generate",
-  "npm run build"
-]
+cmds = ["npm run build"]
 
 [start]
-cmd = "node node_modules/next/dist/bin/next start"
+cmd = "npm run start"

@@ -19,7 +19,7 @@
 body {
   background-color: var(--bg-cream);
   color: var(--text-dark);
-  font-family: 'IBM Plex Arabic', 'Segoe UI', Arial, sans-serif;
+  font-family: var(--font-arabic), 'Segoe UI', Arial, sans-serif;
   direction: rtl;
 }
 

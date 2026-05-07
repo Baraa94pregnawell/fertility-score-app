@@ -32,9 +32,6 @@ export default function QuestionnaireShell({ token }: Props) {
   const question = QUESTIONS[currentIndex]
   const totalQuestions = QUESTIONS.length
   const section = SECTIONS.find(s => s.id === question.sectionId)!
-  const sectionQuestionNumbers = QUESTIONS
-    .slice(0, currentIndex + 1)
-    .map((_, i) => i + 1)
 
   const getValue = () => {
     const raw = answers[question.id]

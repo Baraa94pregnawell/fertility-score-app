@@ -27,7 +27,7 @@ function clamp(v: number, min: number, max: number) { return Math.max(min, Math.
 function getStr(a: Answers, id: string): string { return (a[id] as string) ?? '' }
 function getArr(a: Answers, id: string): string[] {
   const v = a[id]; if (!v) return []
-  return Array.isArray(v) ? v : [v]
+  return Array.isArray(v) ? v : [String(v)]
 }
 
 // ─── BMI ───────────────────────────────────────────────────────────────────
