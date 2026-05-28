@@ -3,7 +3,10 @@ NODE_VERSION = "20.19.1"
 DATABASE_URL = "postgresql://builduser:buildpass@localhost:5432/builddb"
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = [
+  "echo 'DATABASE_URL=postgresql://builduser:buildpass@localhost:5432/builddb' > .env",
+  "npm ci"
+]
 
 [phases.build]
 cmds = ["npm run build"]
