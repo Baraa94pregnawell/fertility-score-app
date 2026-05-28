@@ -2,9 +2,7 @@
 // NO point values here. All scoring lives in lib/scoring.ts.
 
 export type QuestionType = 'single' | 'multi' | 'number'
-
 export interface Option { value: string; label: string }
-
 export interface Question {
   id: string
   text: string
@@ -15,27 +13,26 @@ export interface Question {
   required: boolean
   sectionId: number
 }
-
-export interface Section {
-  id: number
-  label: string
-  englishRef: string
-}
+export interface Section { id: number; label: string }
 
 export const SECTIONS: Section[] = [
-  { id: 1, label: 'المعلومات الأساسية', englishRef: 'Basic Info' },
-  { id: 2, label: 'التغذية والنظام الغذائي', englishRef: 'Diet & Nutrition' },
-  { id: 3, label: 'المكملات والأعشاب', englishRef: 'Supplements & Herbs' },
-  { id: 4, label: 'النوم والتوتر', englishRef: 'Sleep & Stress' },
-  { id: 5, label: 'النشاط البدني', englishRef: 'Exercise' },
-  { id: 6, label: 'المطبخ وتحضير الطعام', englishRef: 'Kitchen & Food Prep' },
-  { id: 7, label: 'العناية الشخصية', englishRef: 'Personal Care & Clothing' },
+  { id: 1, label: 'المعلومات الأساسية' },
+  { id: 2, label: 'أنماط الأكل والمعرفة الغذائية' },
+  { id: 3, label: 'المكملات والأعشاب' },
+  { id: 4, label: 'التوتر والنوم' },
+  { id: 5, label: 'الرياضة والحركة' },
+  { id: 6, label: 'المطبخ وطريقة الطبخ' },
+  { id: 7, label: 'العناية الشخصية' },
+  { id: 8, label: 'الدورة الشهرية' },
+  { id: 9, label: 'الكافيين والمشروبات' },
+  { id: 10, label: 'مصادر المعلومات الصحية' },
+  { id: 11, label: 'أعراض الغدة الدرقية' },
+  { id: 12, label: 'عامل الذكورة' },
 ]
 
 export const QUESTIONS: Question[] = [
-  // ── Section 1 ──────────────────────────────────────────────────
-  {
-    id: 'q1', sectionId: 1, type: 'single', required: true,
+  // ── Section 1: المعلومات الأساسية ─────────────────────────────
+  { id: 'q1', sectionId: 1, type: 'single', required: true,
     text: 'كم عمرك؟',
     options: [
       { value: 'under25', label: 'أقل من 25 سنة' },
@@ -45,20 +42,13 @@ export const QUESTIONS: Question[] = [
       { value: 'over40', label: 'أكثر من 40 سنة' },
     ],
   },
-  {
-    id: 'q2', sectionId: 1, type: 'number', required: true,
-    text: 'ما هو طولك؟', unit: 'سم',
-    helperText: 'الطول بالسنتيمتر',
-  },
-  {
-    id: 'q3', sectionId: 1, type: 'number', required: true,
-    text: 'ما هو وزنك؟', unit: 'كغ',
-    helperText: 'الوزن بالكيلوغرام',
-  },
+  { id: 'q2', sectionId: 1, type: 'number', required: true,
+    text: 'ما هو طولك؟', unit: 'سم', helperText: 'الطول بالسنتيمتر' },
+  { id: 'q3', sectionId: 1, type: 'number', required: true,
+    text: 'ما هو وزنك؟', unit: 'كغ', helperText: 'الوزن بالكيلوغرام — سيتم حساب مؤشر كتلة الجسم تلقائياً' },
 
-  // ── Section 2 ──────────────────────────────────────────────────
-  {
-    id: 'q4', sectionId: 2, type: 'multi', required: true,
+  // ── Section 2: أنماط الأكل ────────────────────────────────────
+  { id: 'q4', sectionId: 2, type: 'multi', required: true,
     text: 'هل جربتِ يوماً أي من هذه الأنظمة الغذائية؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -72,8 +62,7 @@ export const QUESTIONS: Question[] = [
       { value: 'none', label: 'ما جربت شي' },
     ],
   },
-  {
-    id: 'q5', sectionId: 2, type: 'single', required: true,
+  { id: 'q5', sectionId: 2, type: 'single', required: true,
     text: 'هل تقللين النشويات بشكل مستمر الآن؟',
     options: [
       { value: 'always', label: 'نعم، أتجنب الكربوهيدرات دائماً' },
@@ -82,8 +71,7 @@ export const QUESTIONS: Question[] = [
       { value: 'dontknow', label: 'ما أعرف ماهي النشويات بالضبط' },
     ],
   },
-  {
-    id: 'q6', sectionId: 2, type: 'single', required: true,
+  { id: 'q6', sectionId: 2, type: 'single', required: true,
     text: 'هل تقللين الحليب ومنتجاته؟',
     options: [
       { value: 'avoid', label: 'نعم، أتجنبها كلياً' },
@@ -92,8 +80,7 @@ export const QUESTIONS: Question[] = [
       { value: 'dontknow', label: 'ما أعرف إذا كانت مشكلة أو لا' },
     ],
   },
-  {
-    id: 'q9', sectionId: 2, type: 'single', required: true,
+  { id: 'q9', sectionId: 2, type: 'single', required: true,
     text: 'هل لاحظتِ كلمة "نكهات مضافة" أو "added flavors" في مكونات طعامك؟',
     options: [
       { value: 'noticeAvoid', label: 'نعم، ألاحظها وأتجنب المنتج' },
@@ -102,8 +89,7 @@ export const QUESTIONS: Question[] = [
       { value: 'neverRead', label: 'ما أقرأ المكونات أبداً' },
     ],
   },
-  {
-    id: 'q10', sectionId: 2, type: 'single', required: true,
+  { id: 'q10', sectionId: 2, type: 'single', required: true,
     text: 'كم حصة خضار تأكلين يومياً؟',
     helperText: 'الحصة = حفنة أو نصف كوب',
     options: [
@@ -113,8 +99,7 @@ export const QUESTIONS: Question[] = [
       { value: 'threeplus', label: '3 حصص أو أكثر' },
     ],
   },
-  {
-    id: 'q11', sectionId: 2, type: 'single', required: true,
+  { id: 'q11', sectionId: 2, type: 'single', required: true,
     text: 'كم حصة فاكهة تأكلين يومياً؟',
     options: [
       { value: 'none', label: 'لا آكل فاكهة تقريباً' },
@@ -123,8 +108,7 @@ export const QUESTIONS: Question[] = [
       { value: 'threeplus', label: '3 حصص أو أكثر' },
     ],
   },
-  {
-    id: 'q12', sectionId: 2, type: 'single', required: true,
+  { id: 'q12', sectionId: 2, type: 'single', required: true,
     text: 'هل تعرفين كم غرام بروتين يجب أن تأكليه يومياً؟',
     options: [
       { value: 'knowApply', label: 'نعم، وأنا آكل الكمية الصح' },
@@ -133,8 +117,7 @@ export const QUESTIONS: Question[] = [
       { value: 'neverThought', label: 'ما فكرت بالموضوع أبداً' },
     ],
   },
-  {
-    id: 'q13', sectionId: 2, type: 'single', required: true,
+  { id: 'q13', sectionId: 2, type: 'single', required: true,
     text: 'هل تشربين بروتين شيك أو تأخذين بروتين باودر؟',
     options: [
       { value: 'never', label: 'لا أبداً' },
@@ -142,8 +125,7 @@ export const QUESTIONS: Question[] = [
       { value: 'regularly', label: 'بشكل منتظم (3 مرات أو أكثر بالأسبوع)' },
     ],
   },
-  {
-    id: 'q15', sectionId: 2, type: 'multi', required: true,
+  { id: 'q15', sectionId: 2, type: 'multi', required: true,
     text: 'هل سبق وحاولتِ إنقاص وزنك بطريقة سريعة؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -154,8 +136,7 @@ export const QUESTIONS: Question[] = [
       { value: 'none', label: 'لا، ما جربت هيك أشياء' },
     ],
   },
-  {
-    id: 'q16', sectionId: 2, type: 'multi', required: true,
+  { id: 'q16', sectionId: 2, type: 'multi', required: true,
     text: 'هل استخدمتِ حقن أو أدوية إنقاص الوزن سابقاً؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -167,8 +148,7 @@ export const QUESTIONS: Question[] = [
       { value: 'none', label: 'لا، لم أستخدم أي شيء من هذا' },
     ],
   },
-  {
-    id: 'q17', sectionId: 2, type: 'multi', required: true,
+  { id: 'q17', sectionId: 2, type: 'multi', required: true,
     text: 'هل تستخدمين محليات صناعية؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -180,10 +160,100 @@ export const QUESTIONS: Question[] = [
       { value: 'none', label: 'لا أستخدم أي محلي' },
     ],
   },
+  { id: 'qRestaurant', sectionId: 2, type: 'single', required: true,
+    text: 'كم مرة تأكلين من المطاعم أو الأكل الجاهز بالأسبوع؟',
+    options: [
+      { value: 'rarely', label: 'نادراً أو لا أبداً' },
+      { value: 'onceTwice', label: 'مرة إلى مرتين' },
+      { value: 'threeFour', label: '3 إلى 4 مرات' },
+      { value: 'fivePlus', label: '5 مرات أو أكثر' },
+      { value: 'everyday', label: 'كل يوم تقريباً' },
+    ],
+  },
+  { id: 'qSnacksFreq', sectionId: 2, type: 'single', required: true,
+    text: 'كم مرة تأكلين سناكات بين الوجبات يومياً؟',
+    options: [
+      { value: 'never', label: 'لا آكل سناكات أبداً' },
+      { value: 'once', label: 'مرة واحدة' },
+      { value: 'twice', label: 'مرتان' },
+      { value: 'threePlus', label: '3 مرات أو أكثر' },
+      { value: 'insteadOfMeals', label: 'آكل سناكات بدل الوجبات أحياناً' },
+    ],
+  },
+  { id: 'qSnackType', sectionId: 2, type: 'multi', required: true,
+    text: 'ما نوع السناكات التي تأكلينها في الغالب؟',
+    helperText: 'يمكنكِ اختيار أكثر من إجابة',
+    options: [
+      { value: 'chips', label: 'شيبس' },
+      { value: 'chocolate', label: 'شوكولاتة وحلويات مغلفة' },
+      { value: 'biscuit', label: 'بسكويت وكيك جاهز' },
+      { value: 'nuts', label: 'مكسرات' },
+      { value: 'fruit', label: 'فاكهة' },
+      { value: 'yogurt', label: 'زبادي أو جبن' },
+      { value: 'noSnacks', label: 'لا آكل سناكات' },
+    ],
+  },
+  { id: 'qBreakfast', sectionId: 2, type: 'single', required: true,
+    text: 'هل تأكلين فطوراً في الصباح؟',
+    options: [
+      { value: 'yesHome', label: 'نعم، أحضّره في البيت قبل ما أطلع' },
+      { value: 'sometimes', label: 'أحياناً، يعتمد على الوقت' },
+      { value: 'onTheGo', label: 'آكل في الطريق أو بعد ما أوصل الشغل' },
+      { value: 'never', label: 'لا، أتخطى الفطور دائماً' },
+    ],
+  },
+  { id: 'qWorkMeal', sectionId: 2, type: 'single', required: true,
+    text: 'كيف تكون وجبتك خلال يوم العمل؟',
+    options: [
+      { value: 'homePrepared', label: 'أحضّر وجبتي من البيت' },
+      { value: 'delivery', label: 'أطلب توصيل' },
+      { value: 'whatever', label: 'آكل ما هو متاح بعد ما أوصل' },
+      { value: 'skipLunch', label: 'أتخطى الغداء وآكل بعدين' },
+      { value: 'snacksOnly', label: 'سناكات بدل وجبة كاملة' },
+    ],
+  },
+  { id: 'qSocialFreq', sectionId: 2, type: 'single', required: true,
+    text: 'كم مرة بالأسبوع تحضرين تجمعات عائلية أو اجتماعية فيها أكل؟',
+    options: [
+      { value: 'rarely', label: 'نادراً (أقل من مرة بالشهر)' },
+      { value: 'monthly', label: 'مرة بالشهر تقريباً' },
+      { value: 'onceTwiceWeek', label: 'مرة إلى مرتين بالأسبوع' },
+      { value: 'threePlusWeek', label: '3 مرات أو أكثر بالأسبوع' },
+      { value: 'daily', label: 'شبه يومي' },
+    ],
+  },
+  { id: 'qSocialFood', sectionId: 2, type: 'multi', required: true,
+    text: 'كيف يكون الأكل في هذه التجمعات في الغالب؟',
+    helperText: 'يمكنكِ اختيار أكثر من إجابة',
+    options: [
+      { value: 'homemade', label: 'أكل بيتي مطبوخ' },
+      { value: 'sweets', label: 'حلويات ومعجنات بكميات كبيرة' },
+      { value: 'fried', label: 'مقليات ووجبات ثقيلة' },
+      { value: 'takeout', label: 'أكل جاهز أو مطعم' },
+      { value: 'balanced', label: 'عادي ومتوازن نسبياً' },
+    ],
+  },
+  { id: 'qSweetsRelation', sectionId: 2, type: 'single', required: true,
+    text: 'كيف تصفين علاقتك بالحلويات؟',
+    options: [
+      { value: 'dontLike', label: 'لا أميل للحلويات كثيراً' },
+      { value: 'sometimes', label: 'آكلها أحياناً بدون إفراط' },
+      { value: 'craveContinuously', label: 'أشتهيها بشكل مستمر حتى بعد الأكل' },
+      { value: 'soothingCraving', label: 'أحس إنها تهدئني لما أكون متوترة أو تعبانة' },
+    ],
+  },
+  { id: 'qSweetsAwareness', sectionId: 2, type: 'single', required: true,
+    text: 'هل سبق وفكرتِ ليش تشتهين الحلويات بهالطريقة؟',
+    options: [
+      { value: 'knowAndDeal', label: 'أعرف السبب وأحاول أتعامل معه' },
+      { value: 'knowEmotional', label: 'أعرف إنها مرتبطة بتوتري أو مزاجي' },
+      { value: 'thoughtNoAnswer', label: 'فكرت لكن ما وصلت لسبب' },
+      { value: 'neverThought', label: 'لا، ما فكرت في الأمر' },
+    ],
+  },
 
-  // ── Section 3 ──────────────────────────────────────────────────
-  {
-    id: 'q18', sectionId: 3, type: 'single', required: true,
+  // ── Section 3: المكملات والأعشاب ──────────────────────────────
+  { id: 'q18', sectionId: 3, type: 'single', required: true,
     text: 'كم مكمل غذائي تأخذين يومياً؟',
     options: [
       { value: 'none', label: 'لا آخذ شي' },
@@ -192,8 +262,7 @@ export const QUESTIONS: Question[] = [
       { value: '6plus', label: '6 أو أكثر' },
     ],
   },
-  {
-    id: 'q19', sectionId: 3, type: 'multi', required: true,
+  { id: 'q19', sectionId: 3, type: 'multi', required: true,
     text: 'أي من هذه المكملات تأخذينها؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -212,8 +281,7 @@ export const QUESTIONS: Question[] = [
       { value: 'none', label: 'ما آخذ شي' },
     ],
   },
-  {
-    id: 'q20', sectionId: 3, type: 'multi', required: true,
+  { id: 'q20', sectionId: 3, type: 'multi', required: true,
     text: 'هل تأخذين أي من هذه الأعشاب؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -237,8 +305,7 @@ export const QUESTIONS: Question[] = [
       { value: 'none', label: 'ما آخذ شي من هذه' },
     ],
   },
-  {
-    id: 'q21', sectionId: 3, type: 'single', required: true,
+  { id: 'q21', sectionId: 3, type: 'single', required: true,
     text: 'كيف اخترتِ المكملات التي تأخذينها؟',
     options: [
       { value: 'doctor', label: 'بناءً على توصية طبيب أو أخصائية تغذية' },
@@ -249,9 +316,8 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // ── Section 4 ──────────────────────────────────────────────────
-  {
-    id: 'q22', sectionId: 4, type: 'single', required: true,
+  // ── Section 4: التوتر والنوم ───────────────────────────────────
+  { id: 'q22', sectionId: 4, type: 'single', required: true,
     text: 'كم ساعة تنامين بالليل بالمعدل؟',
     options: [
       { value: 'under5', label: 'أقل من 5 ساعات' },
@@ -261,8 +327,17 @@ export const QUESTIONS: Question[] = [
       { value: 'over8', label: 'أكثر من 8 ساعات' },
     ],
   },
-  {
-    id: 'q23', sectionId: 4, type: 'single', required: true,
+  { id: 'qSleepTime', sectionId: 4, type: 'single', required: true,
+    text: 'في أي وقت تنامين في الغالب؟',
+    options: [
+      { value: 'before10pm', label: 'قبل الساعة 10 مساءً' },
+      { value: '10pmTo12', label: 'بين 10 و12 مساءً' },
+      { value: '12to2am', label: 'بين 12 و2 فجراً' },
+      { value: 'after2am', label: 'بعد الساعة 2 فجراً' },
+      { value: 'irregular', label: 'وقت نومي غير منتظم ويتغير كل يوم' },
+    ],
+  },
+  { id: 'q23', sectionId: 4, type: 'single', required: true,
     text: 'هل تصحين من النوم في منتصف الليل؟',
     options: [
       { value: 'never', label: 'لا، نومي متواصل' },
@@ -271,8 +346,7 @@ export const QUESTIONS: Question[] = [
       { value: 'always', label: 'دائماً، ما أكمل ليلة بدون ما أصحى' },
     ],
   },
-  {
-    id: 'q24', sectionId: 4, type: 'single', required: true,
+  { id: 'q24', sectionId: 4, type: 'single', required: true,
     text: 'كيف تصفين مستوى التوتر عندك معظم الأيام؟',
     options: [
       { value: 'calm', label: 'هادئة ومرتاحة في الغالب' },
@@ -281,8 +355,7 @@ export const QUESTIONS: Question[] = [
       { value: 'severe', label: 'توتر شديد ومستمر ما أقدر أتحكم فيه' },
     ],
   },
-  {
-    id: 'q25', sectionId: 4, type: 'multi', required: true,
+  { id: 'q25', sectionId: 4, type: 'multi', required: true,
     text: 'لما تحسين بالتوتر أو القلق، شو تعملين؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -295,8 +368,7 @@ export const QUESTIONS: Question[] = [
       { value: 'nothing', label: 'ما أعمل شي' },
     ],
   },
-  {
-    id: 'q26', sectionId: 4, type: 'single', required: true,
+  { id: 'q26', sectionId: 4, type: 'single', required: true,
     text: 'هل تستخدمين الجوال أو تشاهدين شاشات قبل النوم بأقل من ساعة؟',
     options: [
       { value: 'no', label: 'لا، أوقف الشاشات قبل النوم بساعة على الأقل' },
@@ -306,9 +378,8 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // ── Section 5 ──────────────────────────────────────────────────
-  {
-    id: 'q27', sectionId: 5, type: 'single', required: true,
+  // ── Section 5: الرياضة والحركة ────────────────────────────────
+  { id: 'q27', sectionId: 5, type: 'single', required: true,
     text: 'كم مرة تتمرنين بالأسبوع؟',
     options: [
       { value: 'never', label: 'لا أتمرن أبداً' },
@@ -318,8 +389,7 @@ export const QUESTIONS: Question[] = [
       { value: '6to7', label: '6 إلى 7 مرات' },
     ],
   },
-  {
-    id: 'q28', sectionId: 5, type: 'multi', required: true,
+  { id: 'q28', sectionId: 5, type: 'multi', required: true,
     text: 'ما نوع التمرين الذي تمارسينه؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -334,9 +404,8 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // ── Section 6 ──────────────────────────────────────────────────
-  {
-    id: 'q30', sectionId: 6, type: 'single', required: true,
+  // ── Section 6: المطبخ وطريقة الطبخ ───────────────────────────
+  { id: 'q30', sectionId: 6, type: 'single', required: true,
     text: 'هل تعرفين كيف تختارين الزيت المناسب للطبخ؟',
     options: [
       { value: 'yes', label: 'نعم، أعرف أي زيت يناسب أي درجة حرارة' },
@@ -345,8 +414,7 @@ export const QUESTIONS: Question[] = [
       { value: 'neverThought', label: 'ما فكرت بالموضوع قبل' },
     ],
   },
-  {
-    id: 'q31', sectionId: 6, type: 'multi', required: true,
+  { id: 'q31', sectionId: 6, type: 'multi', required: true,
     text: 'ما نوع أواني الطبخ التي تستخدمينها؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -358,8 +426,7 @@ export const QUESTIONS: Question[] = [
       { value: 'dontknow', label: 'ما أعرف نوعها' },
     ],
   },
-  {
-    id: 'q32', sectionId: 6, type: 'single', required: true,
+  { id: 'q32', sectionId: 6, type: 'single', required: true,
     text: 'هل تستخدمين أدوات مطبخ من السيليكون؟',
     options: [
       { value: 'mostlySilicone', label: 'نعم، معظم أدواتي سيليكون' },
@@ -368,8 +435,7 @@ export const QUESTIONS: Question[] = [
       { value: 'dontknow', label: 'ما أعرف' },
     ],
   },
-  {
-    id: 'q33', sectionId: 6, type: 'single', required: true,
+  { id: 'q33', sectionId: 6, type: 'single', required: true,
     text: 'هل تستخدمين ورق الزبدة أو ورق الألمنيوم في الطبخ؟',
     options: [
       { value: 'parchment', label: 'ورق زبدة دائماً' },
@@ -378,8 +444,7 @@ export const QUESTIONS: Question[] = [
       { value: 'neither', label: 'ما أستخدم أي منهما' },
     ],
   },
-  {
-    id: 'q34', sectionId: 6, type: 'single', required: true,
+  { id: 'q34', sectionId: 6, type: 'single', required: true,
     text: 'ما نوع الماء الذي تشربينه في الغالب؟',
     options: [
       { value: 'tap', label: 'ماء صنبور مباشرة' },
@@ -388,8 +453,7 @@ export const QUESTIONS: Question[] = [
       { value: 'gallon', label: 'ماء معبأ في قلل كبيرة (غالون)' },
     ],
   },
-  {
-    id: 'q35', sectionId: 6, type: 'multi', required: true,
+  { id: 'q35', sectionId: 6, type: 'multi', required: true,
     text: 'كيف تحفظين الأكل في الغالب؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -400,10 +464,21 @@ export const QUESTIONS: Question[] = [
       { value: 'eatFresh', label: 'آكل الأكل مباشرة ما أخزنه كثير' },
     ],
   },
+  { id: 'q51', sectionId: 6, type: 'multi', required: true,
+    text: 'ما طريقة الطبخ التي تستخدمينها أكثر؟',
+    helperText: 'يمكنكِ اختيار أكثر من إجابة',
+    options: [
+      { value: 'deepFry', label: 'قلي عميق' },
+      { value: 'fryOil', label: 'قلي بالزيت على النار' },
+      { value: 'grill', label: 'شوي (فرن أو مشوى)' },
+      { value: 'steam', label: 'طبخ بالبخار' },
+      { value: 'boil', label: 'سلق في الماء' },
+      { value: 'airFryer', label: 'طبخ بدون زيت (هواء - Air fryer)' },
+    ],
+  },
 
-  // ── Section 7 ──────────────────────────────────────────────────
-  {
-    id: 'q36', sectionId: 7, type: 'single', required: true,
+  // ── Section 7: العناية الشخصية ────────────────────────────────
+  { id: 'q36', sectionId: 7, type: 'single', required: true,
     text: 'هل قرأتِ يوماً المكونات على كريم جسمك أو لوشن؟',
     options: [
       { value: 'always', label: 'نعم، دائماً أقرأ المكونات قبل ما أشتري' },
@@ -412,8 +487,7 @@ export const QUESTIONS: Question[] = [
       { value: 'never', label: 'لا، ما نظرت إليها يوماً' },
     ],
   },
-  {
-    id: 'q37', sectionId: 7, type: 'single', required: true,
+  { id: 'q37', sectionId: 7, type: 'single', required: true,
     text: 'هل قرأتِ يوماً مكونات العطر أو البخاخ الذي تستخدمينه؟',
     options: [
       { value: 'always', label: 'نعم، دائماً أتحقق من المكونات' },
@@ -422,8 +496,7 @@ export const QUESTIONS: Question[] = [
       { value: 'never', label: 'لا أبداً' },
     ],
   },
-  {
-    id: 'q38', sectionId: 7, type: 'single', required: true,
+  { id: 'q38', sectionId: 7, type: 'single', required: true,
     text: 'هل تستخدمين ديودورانت أو مضاد للتعرق يومياً؟',
     options: [
       { value: 'everyday', label: 'نعم، كل يوم بدون استثناء' },
@@ -432,8 +505,7 @@ export const QUESTIONS: Question[] = [
       { value: 'rarely', label: 'نادراً أو لا أستخدم' },
     ],
   },
-  {
-    id: 'q39', sectionId: 7, type: 'multi', required: true,
+  { id: 'q39', sectionId: 7, type: 'multi', required: true,
     text: 'ما نوع الفوط الصحية التي تستخدمينها؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -445,8 +517,7 @@ export const QUESTIONS: Question[] = [
       { value: 'dontknow', label: 'ما أعرف ايش نوع اللي أستخدمه' },
     ],
   },
-  {
-    id: 'q40', sectionId: 7, type: 'single', required: true,
+  { id: 'q40', sectionId: 7, type: 'single', required: true,
     text: 'هل قرأتِ يوماً مكونات الفوط الصحية؟',
     options: [
       { value: 'yes', label: 'نعم، أعرف بالضبط ماذا تحتوي' },
@@ -454,14 +525,165 @@ export const QUESTIONS: Question[] = [
       { value: 'never', label: 'لا، ما فكرت في الأمر يوماً' },
     ],
   },
-  {
-    id: 'q41', sectionId: 7, type: 'single', required: true,
+  { id: 'q41', sectionId: 7, type: 'single', required: true,
     text: 'ملابسك في الغالب من أي نوع قماش؟',
     options: [
       { value: 'cotton', label: 'قطن في الغالب' },
       { value: 'mixed', label: 'خليط بين القطن والصناعي' },
       { value: 'synthetic', label: 'صناعي في الغالب (بوليستر، نايلون)' },
       { value: 'noAttention', label: 'ما أنتبه لنوع القماش' },
+    ],
+  },
+
+  // ── Section 8: الدورة الشهرية ─────────────────────────────────
+  { id: 'q42', sectionId: 8, type: 'single', required: true,
+    text: 'كم يوماً تستمر دورتك الشهرية عادةً؟',
+    options: [
+      { value: 'under21', label: 'أقل من 21 يوماً' },
+      { value: '21to35', label: 'من 21 إلى 35 يوماً' },
+      { value: 'over35', label: 'أكثر من 35 يوماً' },
+      { value: 'irregular', label: 'غير منتظمة تماماً' },
+    ],
+  },
+  { id: 'q43', sectionId: 8, type: 'single', required: true,
+    text: 'كيف تصفين غزارة الدم في دورتك؟',
+    options: [
+      { value: 'veryLight', label: 'خفيفة جداً (بقع فقط)' },
+      { value: 'normal', label: 'طبيعية' },
+      { value: 'heavy', label: 'غزيرة' },
+      { value: 'veryHeavy', label: 'غزيرة جداً (تغيير الفوطة كل ساعة أو أقل)' },
+    ],
+  },
+  { id: 'q44', sectionId: 8, type: 'single', required: true,
+    text: 'هل تعانين من آلام شديدة أثناء الدورة؟',
+    options: [
+      { value: 'noneOrMild', label: 'لا، ألم خفيف أو لا ألم' },
+      { value: 'moderate', label: 'ألم معتدل أتحمله' },
+      { value: 'severe', label: 'ألم شديد يؤثر على يومي' },
+      { value: 'verySevere', label: 'ألم شديد جداً يمنعني من الحركة' },
+    ],
+  },
+  { id: 'q45', sectionId: 8, type: 'single', required: true,
+    text: 'هل تلاحظين تجلطات (كتل دم) في دورتك؟',
+    options: [
+      { value: 'never', label: 'لا أبداً' },
+      { value: 'sometimesSmall', label: 'أحياناً وهي صغيرة' },
+      { value: 'regularlyLarge', label: 'بشكل منتظم وكبيرة الحجم' },
+    ],
+  },
+  { id: 'q46', sectionId: 8, type: 'single', required: true,
+    text: 'هل تلاحظين بقعاً أو نزيفاً بين دورتين؟',
+    options: [
+      { value: 'never', label: 'لا أبداً' },
+      { value: 'sometimes', label: 'أحياناً' },
+      { value: 'regularly', label: 'بشكل منتظم' },
+    ],
+  },
+  { id: 'q47', sectionId: 8, type: 'multi', required: true,
+    text: 'هل لاحظتِ أي من هذه الأعراض قبل الدورة؟',
+    helperText: 'يمكنكِ اختيار أكثر من إجابة',
+    options: [
+      { value: 'bloating', label: 'انتفاخ شديد' },
+      { value: 'moodSwings', label: 'تقلبات مزاجية حادة' },
+      { value: 'sugarCravings', label: 'رغبة شديدة في السكر أو الكربوهيدرات' },
+      { value: 'headache', label: 'صداع متكرر' },
+      { value: 'breastPain', label: 'ثدي مؤلم' },
+      { value: 'none', label: 'لا أعاني من أي من هذه' },
+    ],
+  },
+
+  // ── Section 9: الكافيين والمشروبات ───────────────────────────
+  { id: 'q48', sectionId: 9, type: 'single', required: true,
+    text: 'كم كوب قهوة أو شاي تشربين يومياً؟',
+    options: [
+      { value: 'none', label: 'لا أشرب كافيين' },
+      { value: 'one', label: 'كوب واحد' },
+      { value: 'two', label: 'كوبان' },
+      { value: 'threePlus', label: '3 أكواب أو أكثر' },
+    ],
+  },
+  { id: 'q49', sectionId: 9, type: 'single', required: true,
+    text: 'هل تشربين مشروبات الطاقة؟',
+    options: [
+      { value: 'never', label: 'لا أبداً' },
+      { value: 'sometimes', label: 'أحياناً (أقل من مرة بالأسبوع)' },
+      { value: 'regularly', label: 'بشكل منتظم' },
+    ],
+  },
+  { id: 'q50', sectionId: 9, type: 'single', required: true,
+    text: 'كم لتر ماء تشربين يومياً تقريباً؟',
+    options: [
+      { value: 'underOne', label: 'أقل من لتر' },
+      { value: '1to1p5', label: 'من 1 إلى 1.5 لتر' },
+      { value: '1p5to2', label: 'من 1.5 إلى 2 لتر' },
+      { value: 'over2', label: 'أكثر من 2 لتر' },
+    ],
+  },
+
+  // ── Section 10: مصادر المعلومات الصحية ───────────────────────
+  { id: 'q52', sectionId: 10, type: 'multi', required: true,
+    text: 'من أين تحصلين على معلوماتك الصحية عادةً؟',
+    helperText: 'يمكنكِ اختيار أكثر من إجابة',
+    options: [
+      { value: 'doctor', label: 'طبيب أو أخصائية تغذية' },
+      { value: 'trustedSites', label: 'مواقع طبية موثوقة' },
+      { value: 'youtube', label: 'يوتيوب' },
+      { value: 'social', label: 'إنستغرام أو تيك توك' },
+      { value: 'whatsapp', label: 'مجموعات واتساب' },
+      { value: 'friends', label: 'صديقات أو عائلة' },
+      { value: 'noResearch', label: 'ما أبحث، آخذ ما يُقال لي مباشرة' },
+    ],
+  },
+
+  // ── Section 11: أعراض الغدة الدرقية ──────────────────────────
+  { id: 'q53', sectionId: 11, type: 'multi', required: true,
+    text: 'هل تعانين من أي من هذه الأعراض بشكل منتظم؟',
+    helperText: 'يمكنكِ اختيار أكثر من إجابة',
+    options: [
+      { value: 'hairLoss', label: 'تساقط شعر ملحوظ' },
+      { value: 'fatigue', label: 'إرهاق شديد حتى مع النوم الكافي' },
+      { value: 'coldHands', label: 'برود مستمر في اليدين والقدمين' },
+      { value: 'constipation', label: 'إمساك مزمن' },
+      { value: 'fogBrain', label: 'صعوبة في التركيز أو النسيان' },
+      { value: 'weightGain', label: 'زيادة وزن بدون سبب واضح' },
+      { value: 'none', label: 'لا أعاني من أي من هذه' },
+    ],
+  },
+
+  // ── Section 12: عامل الذكورة ──────────────────────────────────
+  { id: 'q54', sectionId: 12, type: 'single', required: true,
+    text: 'هل أجرى زوجك تحليل سائل منوي (سبيرم) في آخر سنتين؟',
+    options: [
+      { value: 'yesNormal', label: 'نعم، والنتائج طبيعية' },
+      { value: 'yesIssues', label: 'نعم، وكانت فيه ملاحظات' },
+      { value: 'notDone', label: 'لا، لم يجرِ التحليل' },
+      { value: 'refused', label: 'رفض إجراء التحليل' },
+    ],
+  },
+  { id: 'q55', sectionId: 12, type: 'single', required: true,
+    text: 'هل تعرفين ما هي العوامل الغذائية التي تؤثر على جودة الحيوانات المنوية؟',
+    options: [
+      { value: 'knowApply', label: 'نعم، ونحن نطبق هذا فعلاً' },
+      { value: 'heardNoApply', label: 'سمعت عن الموضوع لكن لا نطبق شيئاً' },
+      { value: 'dontknow', label: 'لا، ما أعرف أن للغذاء علاقة بهذا' },
+    ],
+  },
+  { id: 'q56', sectionId: 12, type: 'single', required: true,
+    text: 'هل يأخذ زوجك أي مكملات غذائية لدعم الخصوبة؟',
+    options: [
+      { value: 'yesDoctor', label: 'نعم، بناءً على توصية طبيب' },
+      { value: 'yesSelf', label: 'نعم، اختارها بنفسه' },
+      { value: 'none', label: 'لا، ما يأخذ شيئاً' },
+      { value: 'neverThought', label: 'لم نفكر في هذا الأمر' },
+    ],
+  },
+  { id: 'q57', sectionId: 12, type: 'single', required: true,
+    text: 'كيف تصفين نمط حياة زوجك بشكل عام؟',
+    options: [
+      { value: 'healthy', label: 'صحي - يتمرن ويأكل بشكل معتدل' },
+      { value: 'acceptable', label: 'مقبول - لكن يأكل كثيراً من الأكل السريع أو يجلس طويلاً' },
+      { value: 'unhealthy', label: 'غير صحي - قليل الحركة وأكله سيء' },
+      { value: 'dontknow', label: 'لا أعرف كيف أوصفه' },
     ],
   },
 ]

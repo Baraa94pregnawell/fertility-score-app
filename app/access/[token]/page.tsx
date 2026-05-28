@@ -54,10 +54,10 @@ export default async function AccessPage({ params }: Props) {
           </div>
 
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--purple-deep)' }}>
-            مرحباً بكِ في اختبار درجة الخصوبة
+            مقياس الخصوبة الذكي
           </h1>
           <p className="text-base mb-6" style={{ color: '#6B5E7A' }}>
-            طوّرته الأخصائية مها حمّص | PregnaWell
+            بإشراف الأخصائية مها حمّص | PregnaWell
           </p>
 
           <div className="rounded-2xl p-6 mb-8 text-right" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>

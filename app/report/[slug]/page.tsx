@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import type { ReportNarrative } from '@/lib/gemini'
 import type { SectionScores } from '@/lib/scoring'
+import { LEVEL_TEXTS, CLOSING_LINE } from '@/lib/scoring'
 import ScoreGauge from '@/components/report/ScoreGauge'
 import CTAButton from '@/components/report/CTAButton'
 
@@ -13,21 +14,33 @@ interface Props {
 
 const BOOKING_URL = process.env.NEXT_PUBLIC_BOOKING_URL || 'https://pregnawell.com/booking'
 
-const PILLAR_LABELS: Array<{ key: keyof SectionScores; maxKey: keyof SectionScores; label: string; weight: string }> = [
-  { key: 'diet', maxKey: 'dietMax', label: 'التغذية والنظام الغذائي', weight: '25%' },
-  { key: 'supplements', maxKey: 'supplementsMax', label: 'المكملات والأعشاب', weight: '15%' },
-  { key: 'stress', maxKey: 'stressMax', label: 'النوم والتوتر', weight: '20%' },
-  { key: 'exercise', maxKey: 'exerciseMax', label: 'النشاط البدني', weight: '10%' },
-  { key: 'kitchen', maxKey: 'kitchenMax', label: 'المطبخ وتحضير الطعام', weight: '15%' },
-  { key: 'personalCare', maxKey: 'personalCareMax', label: 'العناية الشخصية', weight: '10%' },
-  { key: 'bmi', maxKey: 'bmiMax', label: 'مؤشر كتلة الجسم', weight: '5%' },
+const PILLAR_LABELS: Array<{ key: keyof SectionScores; label: string; weight: string }> = [
+  { key: 'diet',        label: 'التغذية والنظام الغذائي',   weight: '25%' },
+  { key: 'stress',      label: 'التوتر والنوم',              weight: '20%' },
+  { key: 'supplements', label: 'المكملات والأعشاب',          weight: '15%' },
+  { key: 'kitchen',     label: 'المطبخ وتحضير الطعام',       weight: '15%' },
+  { key: 'exercise',    label: 'الرياضة والحركة',            weight: '10%' },
+  { key: 'personalCare',label: 'العناية الشخصية',            weight: '10%' },
+  { key: 'menstrual',   label: 'الدورة الشهرية',             weight: '—'   },
+  { key: 'caffeine',    label: 'الكافيين والمشروبات',        weight: '—'   },
+  { key: 'infoSources', label: 'مصادر المعلومات',            weight: '—'   },
+  { key: 'thyroid',     label: 'أعراض الغدة الدرقية',        weight: '—'   },
+  { key: 'maleFactor',  label: 'عامل الذكورة',               weight: '—'   },
+  { key: 'basicInfo',   label: 'المعلومات الأساسية (BMI)',   weight: '5%'  },
 ]
 
 const categoryColors: Record<string, string> = {
-  excellent: '#0D9488',
-  good: '#059669',
-  needs_improvement: '#D97706',
-  urgent: '#C06078',
+  level1: '#0D9488',
+  level2: '#059669',
+  level3: '#D97706',
+  level4: '#C06078',
+}
+
+const categoryAr: Record<string, string> = {
+  level1: 'ممتاز',
+  level2: 'جيد',
+  level3: 'بحاجة لتحسين',
+  level4: 'تحتاج تدخلاً عاجلاً',
 }
 
 export default async function ReportPage({ params }: Props) {
@@ -40,13 +53,7 @@ export default async function ReportPage({ params }: Props) {
   const sectionScores = JSON.parse(report.sectionScores) as SectionScores
 
   const scoreColor = categoryColors[report.scoreCategory] || '#C06078'
-
-  const scoreCategoryAr: Record<string, string> = {
-    excellent: 'ممتاز',
-    good: 'جيد',
-    needs_improvement: 'بحاجة لتحسين',
-    urgent: 'تحتاج تدخلاً عاجلاً',
-  }
+  const scoreLevelText = LEVEL_TEXTS[report.scoreCategory] || ''
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-cream)' }}>
@@ -55,7 +62,7 @@ export default async function ReportPage({ params }: Props) {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="text-xl font-bold mb-1" style={{ color: 'var(--purple-deep)' }}>PregnaWell</div>
-          <div className="text-sm" style={{ color: '#6B5E7A' }}>بإشراف الأخصائية مها حمّص</div>
+          <div className="text-sm" style={{ color: '#6B5E7A' }}>مقياس الخصوبة الذكي — بإشراف الأخصائية مها حمّص</div>
         </div>
 
         {/* Score Gauge */}
@@ -66,7 +73,7 @@ export default async function ReportPage({ params }: Props) {
           <ScoreGauge
             score={report.fertilityScore}
             scoreCategory={report.scoreCategory}
-            scoreCategoryAr={scoreCategoryAr[report.scoreCategory] || report.scoreCategory}
+            scoreCategoryAr={categoryAr[report.scoreCategory] || report.scoreCategory}
           />
         </div>
 
@@ -75,22 +82,22 @@ export default async function ReportPage({ params }: Props) {
           <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--purple-deep)' }}>تفصيل درجتكِ بالمحاور</h2>
           <p className="text-sm mb-5" style={{ color: '#6B5E7A' }}>أداؤكِ في كل محور من محاور التقييم</p>
           <div className="space-y-4">
-            {PILLAR_LABELS.map(({ key, maxKey, label, weight }) => {
-              const val = sectionScores[key] as number
-              const max = sectionScores[maxKey] as number
-              const pct = Math.round((val / max) * 100)
+            {PILLAR_LABELS.map(({ key, label, weight }) => {
+              const section = sectionScores[key]
+              if (!section) return null
+              const pct = section.pct
               return (
                 <div key={key}>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium" style={{ color: '#6B5E7A' }}>{weight}</span>
+                    <span className="text-xs font-medium" style={{ color: '#9B8BA8' }}>{weight}</span>
                     <span className="text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>{label}</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#E8DFF0' }}>
                     <div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full transition-all"
                       style={{
                         width: `${pct}%`,
-                        backgroundColor: pct >= 80 ? '#059669' : pct >= 60 ? '#D97706' : '#C06078',
+                        backgroundColor: pct >= 75 ? '#059669' : pct >= 50 ? '#D97706' : '#C06078',
                       }}
                     />
                   </div>
@@ -101,17 +108,20 @@ export default async function ReportPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Hook */}
-        <div className="mb-6">
+        {/* Level text — fixed pre-written text based on score band */}
+        <div
+          className="rounded-2xl p-6 mb-6"
+          style={{ backgroundColor: 'white', border: `1px solid ${scoreColor}30` }}
+        >
           <p
-            className="text-2xl font-bold leading-relaxed text-center"
-            style={{ color: scoreColor }}
+            className="text-base leading-loose font-medium"
+            style={{ color: scoreColor, whiteSpace: 'pre-line' }}
           >
-            {narrative.hook}
+            {scoreLevelText}
           </p>
         </div>
 
-        {/* Narrative */}
+        {/* Gemini narrative — elaboration of triggered pain points */}
         <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
           <div
             className="text-base leading-loose"
@@ -126,10 +136,13 @@ export default async function ReportPage({ params }: Props) {
           <CTAButton scoreCategory={report.scoreCategory} variant="mid" bookingUrl={BOOKING_URL} />
         </div>
 
-        {/* Closing Line */}
-        <div className="text-center mb-6">
-          <p className="text-lg font-semibold italic" style={{ color: 'var(--purple-deep)' }}>
-            {narrative.closingLine}
+        {/* Closing line — fixed constant */}
+        <div className="text-center mb-6 px-4">
+          <p
+            className="text-base leading-loose font-semibold"
+            style={{ color: 'var(--purple-deep)', whiteSpace: 'pre-line' }}
+          >
+            {CLOSING_LINE}
           </p>
         </div>
 

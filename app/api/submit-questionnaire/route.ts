@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const tokenRecord = tokenResult.record
 
     // 2. Calculate score deterministically
-    const { finalScore, scoreCategory, scoreCategoryAr, sectionScores, bmi } = calculateScore(answers)
+    const { finalScore, scoreCategory, scoreCategoryAr, scoreLevelText, sectionScores, triggeredSentences, bmi } = calculateScore(answers)
 
     // 3. Get age from answers
     const age = (answers['q1'] as string) || ''
@@ -61,19 +61,19 @@ export async function POST(req: NextRequest) {
     try {
       reportContent = await generateReport({
         score: finalScore,
+        scoreCategory,
         scoreCategoryAr,
+        scoreLevelText,
+        triggeredSentences,
         sectionScores,
         answers,
-        age,
         bmi,
       })
     } catch (err) {
       console.error('[submit-questionnaire] Gemini error:', err)
       // Fallback narrative if Gemini fails
       reportContent = {
-        hook: 'تقريركِ جاهز — اطلعي على نتائجكِ الآن.',
         narrative: 'بناءً على إجاباتكِ، قمنا بتحليل وضعكِ الغذائي والصحي بدقة. نتائجكِ تُشير إلى مجالات مهمة تستحق الاهتمام. للحصول على خطة مخصصة، نُشجعكِ على حجز مكالمتكِ التقييمية مع فريق PregnaWell.',
-        closingLine: 'المكالمة التقييمية خطوتكِ الأولى نحو التغيير.',
       }
     }
 

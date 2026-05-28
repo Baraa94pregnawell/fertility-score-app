@@ -10,10 +10,10 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 })
 
 export const metadata: Metadata = {
-  title: 'تقرير درجة الخصوبة | PregnaWell',
+  title: 'مقياس الخصوبة الذكي | PregnaWell',
   description: 'تقرير شخصي يُقيّم تأثير التغذية والبيئة ونمط الحياة على خصوبتكِ. أعدّته الأخصائية مها حمّص.',
   openGraph: {
-    title: 'تقرير درجة الخصوبة من PregnaWell — بقلم الأخصائية مها حمّص',
+    title: 'مقياس الخصوبة الذكي من PregnaWell — بإشراف الأخصائية مها حمّص',
     description: 'تقرير شخصي يُقيّم تأثير التغذية والبيئة ونمط الحياة على خصوبتكِ. أعدّته الأخصائية مها حمّص.',
   },
 }
