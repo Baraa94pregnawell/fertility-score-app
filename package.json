@@ -7,18 +7,17 @@
   },
   "scripts": {
     "dev": "node node_modules/next/dist/bin/next dev",
-    "postinstall": "prisma generate",
-    "build": "node node_modules/next/dist/bin/next build",
+    "build": "prisma generate && node node_modules/next/dist/bin/next build",
     "start": "prisma migrate deploy && node node_modules/next/dist/bin/next start -p ${PORT:-3000}",
     "lint": "node node_modules/next/dist/bin/next lint"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "^5.22.0",
     "cuid": "^3.0.0",
     "framer-motion": "^12.38.0",
     "next": "14.2.35",
-    "prisma": "^7.8.0",
+    "prisma": "^5.22.0",
     "react": "^18",
     "react-dom": "^18",
     "slugify": "^1.6.9"
