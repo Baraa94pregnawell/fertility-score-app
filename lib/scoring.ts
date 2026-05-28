@@ -463,7 +463,6 @@ function getTriggeredSentences(a: Answers, bmi: number): string[] {
   if (str('qSnacksFreq') === 'insteadOfMeals') triggered.push('الاعتماد على السناكات بدل وجبات حقيقية يخلق تذبذباً مستمراً في سكر الدم - وهذا التذبذب يرهق البنكرياس ويضرب حساسية الإنسولين يومياً.')
   const st = arr('qSnackType').filter(v => v !== 'noSnacks')
   const unhealthy = ['chips','chocolate','biscuit']
-  const healthy = ['nuts','fruit','yogurt']
   if (st.length > 0 && st.every(v => unhealthy.includes(v))) triggered.push('السناكات المصنعة ترفع السكر بسرعة ثم تهبط بسرعة - هذه الدورة المتكررة تجهد الإنسولين وتؤثر مباشرةً على انتظام التبويض.')
   if (str('qBreakfast') === 'never') triggered.push('تخطي الفطور يرفع الكورتيزول في الصباح ويزيد مقاومة الإنسولين خلال اليوم - وكلاهما يؤثر على جودة التبويض.')
   if (['whatever','snacksOnly'].includes(str('qWorkMeal'))) triggered.push('الأكل العشوائي بدون تخطيط يعني أن جسمك لا يحصل على العناصر الغذائية التي تحتاجها هرموناتك بشكل منتظم.')

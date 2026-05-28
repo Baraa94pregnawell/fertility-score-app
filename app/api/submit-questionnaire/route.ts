@@ -39,9 +39,6 @@ export async function POST(req: NextRequest) {
     // 2. Calculate score deterministically
     const { finalScore, scoreCategory, scoreCategoryAr, scoreLevelText, sectionScores, triggeredSentences, bmi } = calculateScore(answers)
 
-    // 3. Get age from answers
-    const age = (answers['q1'] as string) || ''
-
     // 4. Save submission first
     const submission = await prisma.questionnaireSubmission.create({
       data: {
