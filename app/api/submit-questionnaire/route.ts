@@ -96,9 +96,11 @@ export async function POST(req: NextRequest) {
 
     // 8. Fire-and-forget: notify GHL (triggers Email #2)
     const reportUrl = buildReportUrl(report.slug)
+    const phone = (answers['qPhone'] as string) || undefined
     sendReportWebhook({
       email: tokenRecord.userEmail,
       firstName: firstName,
+      phone,
       reportUrl,
       score: finalScore,
       scoreCategory,

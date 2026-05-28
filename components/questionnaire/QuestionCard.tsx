@@ -4,6 +4,7 @@ import type { Question } from '@/lib/questions'
 import SingleChoice from './question-types/SingleChoice'
 import MultiChoice from './question-types/MultiChoice'
 import NumberInput from './question-types/NumberInput'
+import PhoneInput from './question-types/PhoneInput'
 
 interface Props {
   question: Question
@@ -49,6 +50,12 @@ export default function QuestionCard({ question, value, onChange, heightValue, e
             max={question.id === 'q2' ? 220 : question.id === 'q3' ? 250 : 9999}
             showBmi={question.id === 'q3'}
             heightValue={heightValue}
+          />
+        )}
+        {question.type === 'phone' && (
+          <PhoneInput
+            value={value as string}
+            onChange={onChange as (v: string) => void}
           />
         )}
       </div>

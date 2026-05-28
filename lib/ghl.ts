@@ -22,6 +22,7 @@ export async function sendAccessWebhook(payload: {
 export async function sendReportWebhook(payload: {
   email: string
   firstName: string
+  phone?: string
   reportUrl: string
   score: number
   scoreCategory: string
