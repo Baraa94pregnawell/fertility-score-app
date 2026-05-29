@@ -11,7 +11,7 @@ interface Props {
   token: string
 }
 
-const MULTI_QUESTIONS = new Set(['q4', 'q15', 'q16', 'q17', 'q19', 'q20', 'q25', 'q28', 'q31', 'q35', 'q39'])
+const MULTI_QUESTIONS = new Set(['q4', 'q15', 'q16', 'q17', 'qSnackType', 'qSocialFood', 'q19', 'q20', 'q25', 'q28', 'q31', 'q35', 'q51', 'q39', 'q47', 'q52', 'q53'])
 const EXCLUSIVE_OPTIONS: Record<string, string[]> = {
   q4: ['none'],
   q15: ['none'],
@@ -99,7 +99,8 @@ export default function QuestionnaireShell({ token }: Props) {
       <div className="sticky top-0 z-10 px-4 pt-4 pb-2" style={{ backgroundColor: 'var(--bg-cream)' }}>
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-3">
-            <span className="text-lg font-bold" style={{ color: 'var(--purple-deep)' }}>PregnaWell</span>
+            <img src="/logo/pregnawell.png" alt="PregnaWell" className="h-8 mx-auto" />
+            <p className="text-xs mt-1 font-medium" style={{ color: 'var(--rose-dusty)' }}>مقياس الخصوبة الذكي</p>
           </div>
           <ProgressBar
             currentSection={question.sectionId}
