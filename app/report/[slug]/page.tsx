@@ -114,10 +114,11 @@ export default async function ReportPage({ params }: Props) {
               return (
                 <div key={key}>
                   <div className="flex items-center justify-between mb-1">
+                    {/* In RTL: first child → right, second child → left */}
+                    {/* Label on the right (reading start in Arabic) */}
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>{label}</span>
                     {/* Score % on the left */}
                     <span className="text-sm font-bold tabular-nums" style={{ color: barColor }}>{pct}%</span>
-                    {/* Label on the right (RTL natural order) */}
-                    <span className="text-sm font-semibold text-right" style={{ color: 'var(--text-dark)' }}>{label}</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#E8DFF0' }}>
                     <div

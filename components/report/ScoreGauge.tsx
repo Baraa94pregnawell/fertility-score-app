@@ -13,7 +13,6 @@ const categoryColors: Record<string, string> = {
   level2: '#059669',
   level3: '#D97706',
   level4: '#C06078',
-  // legacy keys for old reports stored before rename
   excellent: '#0D9488',
   good: '#059669',
   needs_improvement: '#D97706',
@@ -32,8 +31,7 @@ export default function ScoreGauge({ score, scoreCategory, scoreCategoryAr }: Pr
       if (!start) start = timestamp
       const elapsed = timestamp - start
       const progress = Math.min(elapsed / duration, 1)
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3)
+      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
       setDisplayScore(Math.round(eased * score))
       if (progress < 1) requestAnimationFrame(animate)
     }
@@ -42,55 +40,50 @@ export default function ScoreGauge({ score, scoreCategory, scoreCategoryAr }: Pr
     return () => cancelAnimationFrame(raf)
   }, [score])
 
-  // SVG semicircle gauge — starts at left (180°), sweeps right to (0°)
-  const radius = 75
-  const cx = 100
-  const cy = 100
-  const strokeW = 14
+  // Semicircle gauge using strokeDashoffset — reliable on all browsers
+  const r = 70
+  const cx = 110
+  const cy = 90
+  // Full semicircle length = π * r
+  const arcLen = Math.PI * r
+  // How much of the arc to fill based on displayScore
+  const fillLen = (displayScore / 100) * arcLen
+  const dashOffset = arcLen - fillLen
 
-  const polarToCartesian = (angleDeg: number) => {
-    const rad = (angleDeg * Math.PI) / 180
-    return {
-      x: cx + radius * Math.cos(rad),
-      y: cy + radius * Math.sin(rad),
-    }
-  }
-
-  const arcPath = (startDeg: number, endDeg: number) => {
-    const s = polarToCartesian(startDeg)
-    const e = polarToCartesian(endDeg)
-    const largeArc = Math.abs(endDeg - startDeg) > 180 ? 1 : 0
-    const sweep = endDeg < startDeg ? 0 : 1
-    return `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${e.x} ${e.y}`
-  }
-
-  // Background: 180° → 0° (right sweep = sweep=0 going counter-clockwise from left to right)
-  const bgPath = arcPath(180, 0)
-  // Score arc: 180° → (180 - score% * 180°)
-  const scoreEndDeg = 180 - (displayScore / 100) * 180
-  const scorePath = displayScore > 0 ? arcPath(180, scoreEndDeg) : null
+  // SVG path: left endpoint → top → right endpoint (through top of circle)
+  const d = `M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy}`
 
   return (
     <div className="text-center">
       <p className="text-sm font-medium mb-2" style={{ color: '#6B5E7A' }}>درجة خصوبتكِ</p>
-      <svg width="200" height="115" viewBox="0 0 200 115" className="mx-auto">
-        {/* Background arc */}
-        <path d={bgPath} fill="none" stroke="#E8DFF0" strokeWidth={strokeW} strokeLinecap="round" />
-        {/* Score arc */}
-        {scorePath && (
-          <path
-            d={scorePath}
-            fill="none"
-            stroke={color}
-            strokeWidth={strokeW}
-            strokeLinecap="round"
-          />
-        )}
+
+      <svg width="220" height="110" viewBox="0 0 220 110" className="mx-auto">
+        {/* Background arc — full grey semicircle */}
+        <path
+          d={d}
+          fill="none"
+          stroke="#E8DFF0"
+          strokeWidth="14"
+          strokeLinecap="round"
+          strokeDasharray={arcLen}
+          strokeDashoffset={0}
+        />
+        {/* Score arc — animated fill */}
+        <path
+          d={d}
+          fill="none"
+          stroke={color}
+          strokeWidth="14"
+          strokeLinecap="round"
+          strokeDasharray={arcLen}
+          strokeDashoffset={dashOffset}
+        />
         {/* Score number */}
         <text
-          x="100" y="98"
+          x={cx}
+          y={cy - 10}
           textAnchor="middle"
-          fontSize="38"
+          fontSize="40"
           fontWeight="bold"
           fill={color}
           fontFamily="IBM Plex Arabic, Arial, sans-serif"
@@ -98,8 +91,9 @@ export default function ScoreGauge({ score, scoreCategory, scoreCategoryAr }: Pr
           {displayScore}
         </text>
       </svg>
-      {/* Disclaimer under score */}
-      <p className="text-xs mt-2 px-4 leading-relaxed" style={{ color: '#9B8BA8' }}>
+
+      {/* Disclaimer */}
+      <p className="text-xs mt-1 px-4 leading-relaxed" style={{ color: '#9B8BA8' }}>
         هذا التقرير معدٌّ لأغراض تثقيفية وتوعوية حصراً، ولا يُعدّ تشخيصاً طبياً ولا بديلاً عن استشارة مختص.
       </p>
 
