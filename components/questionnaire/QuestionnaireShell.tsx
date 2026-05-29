@@ -99,7 +99,7 @@ export default function QuestionnaireShell({ token }: Props) {
       <div className="sticky top-0 z-10 px-4 pt-4 pb-2" style={{ backgroundColor: 'var(--bg-cream)' }}>
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-3">
-            <img src="/logo/pregnawell.png" alt="PregnaWell" className="h-8 mx-auto" />
+            <img src="/logo/logo-wordmark.png" alt="PregnaWell" className="h-8 mx-auto" />
             <p className="text-xs mt-1 font-medium" style={{ color: 'var(--rose-dusty)' }}>مقياس الخصوبة الذكي</p>
           </div>
           <ProgressBar
