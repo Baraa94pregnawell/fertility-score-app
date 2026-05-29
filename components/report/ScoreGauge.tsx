@@ -98,7 +98,10 @@ export default function ScoreGauge({ score, scoreCategory, scoreCategoryAr }: Pr
           {displayScore}
         </text>
       </svg>
-      <p className="text-sm mt-1" style={{ color: '#6B5E7A' }}>وفق تقييم PregnaWell</p>
+      {/* Disclaimer under score */}
+      <p className="text-xs mt-2 px-4 leading-relaxed" style={{ color: '#9B8BA8' }}>
+        هذا التقرير معدٌّ لأغراض تثقيفية وتوعوية حصراً، ولا يُعدّ تشخيصاً طبياً ولا بديلاً عن استشارة مختص.
+      </p>
 
       {/* Badge */}
       <div

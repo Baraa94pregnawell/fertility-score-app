@@ -106,26 +106,25 @@ export default async function ReportPage({ params }: Props) {
           <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--purple-deep)' }}>تفصيل درجتكِ بالمحاور</h2>
           <p className="text-sm mb-5" style={{ color: '#6B5E7A' }}>أداؤكِ في كل محور من محاور التقييم</p>
           <div className="space-y-4">
-            {PILLAR_LABELS.map(({ key, label, weight }) => {
+            {PILLAR_LABELS.map(({ key, label }) => {
               const section = sectionScores[key]
               if (!section) return null
               const pct = section.pct
+              const barColor = pct >= 75 ? '#059669' : pct >= 50 ? '#D97706' : '#C06078'
               return (
                 <div key={key}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-medium" style={{ color: '#9B8BA8' }}>{weight}</span>
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>{label}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    {/* Score % on the left */}
+                    <span className="text-sm font-bold tabular-nums" style={{ color: barColor }}>{pct}%</span>
+                    {/* Label on the right (RTL natural order) */}
+                    <span className="text-sm font-semibold text-right" style={{ color: 'var(--text-dark)' }}>{label}</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#E8DFF0' }}>
                     <div
                       className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${pct}%`,
-                        backgroundColor: pct >= 75 ? '#059669' : pct >= 50 ? '#D97706' : '#C06078',
-                      }}
+                      style={{ width: `${pct}%`, backgroundColor: barColor }}
                     />
                   </div>
-                  <div className="text-left text-xs mt-0.5" style={{ color: '#6B5E7A' }}>{pct}%</div>
                 </div>
               )
             })}
@@ -177,16 +176,6 @@ export default async function ReportPage({ params }: Props) {
         {/* CTA Block 2 — Bottom */}
         <div className="mb-6">
           <CTAButton scoreCategory={normalizedCategory} variant="bottom" bookingUrl={BOOKING_URL} />
-        </div>
-
-        {/* Medical Disclaimer */}
-        <div
-          className="rounded-2xl p-5 mb-8 text-center"
-          style={{ backgroundColor: '#F5F0FA', border: '1px solid #D6C9E8' }}
-        >
-          <p className="text-sm leading-relaxed" style={{ color: '#6B5E7A' }}>
-            هذا التقرير معدٌّ لأغراض تثقيفية وتوعوية حصراً، ولا يُعدّ تشخيصاً طبياً ولا بديلاً عن استشارة مختص.
-          </p>
         </div>
 
         {/* Footer */}
