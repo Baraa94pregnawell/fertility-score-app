@@ -1,16 +1,12 @@
 'use client'
 
 interface Props {
-  currentSection: number
-  totalSections: number
   currentQuestion: number
   totalQuestions: number
   sectionName: string
 }
 
 export default function ProgressBar({
-  currentSection,
-  totalSections,
   currentQuestion,
   totalQuestions,
   sectionName,

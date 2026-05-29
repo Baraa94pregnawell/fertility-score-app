@@ -103,8 +103,6 @@ export default function QuestionnaireShell({ token }: Props) {
             <p className="text-xs mt-1 font-medium" style={{ color: 'var(--rose-dusty)' }}>مقياس الخصوبة الذكي</p>
           </div>
           <ProgressBar
-            currentSection={question.sectionId}
-            totalSections={SECTIONS.length}
             currentQuestion={currentIndex + 1}
             totalQuestions={totalQuestions}
             sectionName={section.label}
