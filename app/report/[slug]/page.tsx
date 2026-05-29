@@ -34,13 +34,35 @@ const categoryColors: Record<string, string> = {
   level2: '#059669',
   level3: '#D97706',
   level4: '#C06078',
+  // legacy
+  excellent: '#0D9488',
+  good: '#059669',
+  needs_improvement: '#D97706',
+  urgent: '#C06078',
 }
 
+// Badge labels — match user's document exactly
 const categoryAr: Record<string, string> = {
-  level1: 'ممتاز',
-  level2: 'جيد',
-  level3: 'بحاجة لتحسين',
-  level4: 'تحتاج تدخلاً عاجلاً',
+  level1: 'جسمك في وضع جيد',
+  level2: 'جسمك فيه فجوات تحتاج اهتمام',
+  level3: 'جسمك يعاني ويحتاج تدخل فوري',
+  level4: 'إنذار مبكر - جسمك يحتاجك الآن',
+  // legacy
+  excellent: 'جسمك في وضع جيد',
+  good: 'جسمك فيه فجوات تحتاج اهتمام',
+  needs_improvement: 'جسمك يعاني ويحتاج تدخل فوري',
+  urgent: 'إنذار مبكر - جسمك يحتاجك الآن',
+}
+
+// Normalize legacy category keys to new level keys
+function normalizeCategory(cat: string): string {
+  const map: Record<string, string> = {
+    excellent: 'level1',
+    good: 'level2',
+    needs_improvement: 'level3',
+    urgent: 'level4',
+  }
+  return map[cat] || cat
 }
 
 export default async function ReportPage({ params }: Props) {
@@ -52,8 +74,10 @@ export default async function ReportPage({ params }: Props) {
   const narrative = JSON.parse(report.reportContent) as ReportNarrative
   const sectionScores = JSON.parse(report.sectionScores) as SectionScores
 
-  const scoreColor = categoryColors[report.scoreCategory] || '#C06078'
-  const scoreLevelText = LEVEL_TEXTS[report.scoreCategory] || ''
+  const normalizedCategory = normalizeCategory(report.scoreCategory)
+  const scoreColor = categoryColors[normalizedCategory] || '#C06078'
+  const scoreLevelText = LEVEL_TEXTS[normalizedCategory] || ''
+  const badgeAr = categoryAr[normalizedCategory] || ''
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-cream)' }}>
@@ -61,8 +85,8 @@ export default async function ReportPage({ params }: Props) {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="text-xl font-bold mb-1" style={{ color: 'var(--purple-deep)' }}>PregnaWell</div>
-          <div className="text-sm" style={{ color: '#6B5E7A' }}>مقياس الخصوبة الذكي — بإشراف الأخصائية مها حمّص</div>
+          <img src="/logo/logo-wordmark.png" alt="PregnaWell" className="h-9 mx-auto mb-1" />
+          <div className="text-sm font-medium" style={{ color: 'var(--rose-dusty)' }}>مقياس الخصوبة الذكي</div>
         </div>
 
         {/* Score Gauge */}
@@ -72,8 +96,8 @@ export default async function ReportPage({ params }: Props) {
         >
           <ScoreGauge
             score={report.fertilityScore}
-            scoreCategory={report.scoreCategory}
-            scoreCategoryAr={categoryAr[report.scoreCategory] || report.scoreCategory}
+            scoreCategory={normalizedCategory}
+            scoreCategoryAr={badgeAr}
           />
         </div>
 
@@ -109,34 +133,38 @@ export default async function ReportPage({ params }: Props) {
         </div>
 
         {/* Level text — fixed pre-written text based on score band */}
-        <div
-          className="rounded-2xl p-6 mb-6"
-          style={{ backgroundColor: 'white', border: `1px solid ${scoreColor}30` }}
-        >
-          <p
-            className="text-base leading-loose font-medium"
-            style={{ color: scoreColor, whiteSpace: 'pre-line' }}
-          >
-            {scoreLevelText}
-          </p>
-        </div>
-
-        {/* Gemini narrative — elaboration of triggered pain points */}
-        <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
+        {scoreLevelText ? (
           <div
-            className="text-base leading-loose"
-            style={{ color: 'var(--text-dark)', whiteSpace: 'pre-line' }}
+            className="rounded-2xl p-6 mb-6"
+            style={{ backgroundColor: 'white', border: `2px solid ${scoreColor}40` }}
           >
-            {narrative.narrative}
+            <p
+              className="text-base leading-loose font-medium"
+              style={{ color: scoreColor, whiteSpace: 'pre-line' }}
+            >
+              {scoreLevelText}
+            </p>
           </div>
-        </div>
+        ) : null}
+
+        {/* Gemini narrative */}
+        {narrative?.narrative ? (
+          <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
+            <div
+              className="text-base leading-loose"
+              style={{ color: 'var(--text-dark)', whiteSpace: 'pre-line' }}
+            >
+              {narrative.narrative}
+            </div>
+          </div>
+        ) : null}
 
         {/* CTA Block 1 — Mid */}
         <div className="mb-6">
-          <CTAButton scoreCategory={report.scoreCategory} variant="mid" bookingUrl={BOOKING_URL} />
+          <CTAButton scoreCategory={normalizedCategory} variant="mid" bookingUrl={BOOKING_URL} />
         </div>
 
-        {/* Closing line — fixed constant */}
+        {/* Closing line */}
         <div className="text-center mb-6 px-4">
           <p
             className="text-base leading-loose font-semibold"
@@ -148,7 +176,7 @@ export default async function ReportPage({ params }: Props) {
 
         {/* CTA Block 2 — Bottom */}
         <div className="mb-6">
-          <CTAButton scoreCategory={report.scoreCategory} variant="bottom" bookingUrl={BOOKING_URL} />
+          <CTAButton scoreCategory={normalizedCategory} variant="bottom" bookingUrl={BOOKING_URL} />
         </div>
 
         {/* Medical Disclaimer */}
@@ -158,7 +186,6 @@ export default async function ReportPage({ params }: Props) {
         >
           <p className="text-sm leading-relaxed" style={{ color: '#6B5E7A' }}>
             هذا التقرير معدٌّ لأغراض تثقيفية وتوعوية حصراً، ولا يُعدّ تشخيصاً طبياً ولا بديلاً عن استشارة مختص.
-            للحصول على تقييم شامل، احجزي مكالمتكِ التقييمية مع فريق PregnaWell.
           </p>
         </div>
 

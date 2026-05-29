@@ -9,6 +9,11 @@ interface Props {
 }
 
 const categoryColors: Record<string, string> = {
+  level1: '#0D9488',
+  level2: '#059669',
+  level3: '#D97706',
+  level4: '#C06078',
+  // legacy keys for old reports stored before rename
   excellent: '#0D9488',
   good: '#059669',
   needs_improvement: '#D97706',
@@ -20,73 +25,86 @@ export default function ScoreGauge({ score, scoreCategory, scoreCategoryAr }: Pr
   const color = categoryColors[scoreCategory] || '#C06078'
 
   useEffect(() => {
-    const duration = 1500
-    const steps = 60
-    const increment = score / steps
-    let current = 0
-    const timer = setInterval(() => {
-      current += increment
-      if (current >= score) {
-        setDisplayScore(score)
-        clearInterval(timer)
-      } else {
-        setDisplayScore(Math.round(current))
-      }
-    }, duration / steps)
-    return () => clearInterval(timer)
+    let start: number | null = null
+    const duration = 1800
+
+    const animate = (timestamp: number) => {
+      if (!start) start = timestamp
+      const elapsed = timestamp - start
+      const progress = Math.min(elapsed / duration, 1)
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplayScore(Math.round(eased * score))
+      if (progress < 1) requestAnimationFrame(animate)
+    }
+
+    const raf = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(raf)
   }, [score])
 
-  // SVG gauge — semicircle
-  const radius = 80
+  // SVG semicircle gauge — starts at left (180°), sweeps right to (0°)
+  const radius = 75
   const cx = 100
   const cy = 100
-  const totalArc = 180
-  const scoreArc = (displayScore / 100) * totalArc
+  const strokeW = 14
 
-  const polarToCartesian = (cx: number, cy: number, r: number, angleDeg: number) => {
+  const polarToCartesian = (angleDeg: number) => {
     const rad = (angleDeg * Math.PI) / 180
     return {
-      x: cx + r * Math.cos(rad),
-      y: cy + r * Math.sin(rad),
+      x: cx + radius * Math.cos(rad),
+      y: cy + radius * Math.sin(rad),
     }
   }
 
-  const describeArc = (cx: number, cy: number, r: number, startDeg: number, endDeg: number) => {
-    const start = polarToCartesian(cx, cy, r, startDeg)
-    const end = polarToCartesian(cx, cy, r, endDeg)
+  const arcPath = (startDeg: number, endDeg: number) => {
+    const s = polarToCartesian(startDeg)
+    const e = polarToCartesian(endDeg)
     const largeArc = Math.abs(endDeg - startDeg) > 180 ? 1 : 0
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`
+    const sweep = endDeg < startDeg ? 0 : 1
+    return `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${e.x} ${e.y}`
   }
 
-  const bgPath = describeArc(cx, cy, radius, 180, 0)
-  const scorePath = describeArc(cx, cy, radius, 180, 180 - scoreArc)
+  // Background: 180° → 0° (right sweep = sweep=0 going counter-clockwise from left to right)
+  const bgPath = arcPath(180, 0)
+  // Score arc: 180° → (180 - score% * 180°)
+  const scoreEndDeg = 180 - (displayScore / 100) * 180
+  const scorePath = displayScore > 0 ? arcPath(180, scoreEndDeg) : null
 
   return (
     <div className="text-center">
       <p className="text-sm font-medium mb-2" style={{ color: '#6B5E7A' }}>درجة خصوبتكِ</p>
-      <svg width="200" height="120" viewBox="0 0 200 120" className="mx-auto">
+      <svg width="200" height="115" viewBox="0 0 200 115" className="mx-auto">
         {/* Background arc */}
-        <path d={bgPath} fill="none" stroke="#E8DFF0" strokeWidth="16" strokeLinecap="round" />
+        <path d={bgPath} fill="none" stroke="#E8DFF0" strokeWidth={strokeW} strokeLinecap="round" />
         {/* Score arc */}
-        <path
-          d={scorePath}
-          fill="none"
-          stroke={color}
-          strokeWidth="16"
-          strokeLinecap="round"
-          style={{ transition: 'all 0.1s linear' }}
-        />
-        {/* Score text */}
-        <text x="100" y="95" textAnchor="middle" fontSize="36" fontWeight="bold" fill={color}
-          fontFamily="IBM Plex Arabic, Arial, sans-serif">
+        {scorePath && (
+          <path
+            d={scorePath}
+            fill="none"
+            stroke={color}
+            strokeWidth={strokeW}
+            strokeLinecap="round"
+          />
+        )}
+        {/* Score number */}
+        <text
+          x="100" y="98"
+          textAnchor="middle"
+          fontSize="38"
+          fontWeight="bold"
+          fill={color}
+          fontFamily="IBM Plex Arabic, Arial, sans-serif"
+        >
           {displayScore}
         </text>
       </svg>
       <p className="text-sm mt-1" style={{ color: '#6B5E7A' }}>وفق تقييم PregnaWell</p>
 
       {/* Badge */}
-      <div className="inline-block mt-3 px-4 py-1.5 rounded-full text-sm font-semibold text-white"
-        style={{ backgroundColor: color }}>
+      <div
+        className="inline-block mt-3 px-5 py-1.5 rounded-full text-sm font-semibold text-white"
+        style={{ backgroundColor: color }}
+      >
         {scoreCategoryAr}
       </div>
     </div>
