@@ -46,19 +46,10 @@ export default async function AccessPage({ params }: Props) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ backgroundColor: 'var(--bg-cream)' }}>
         <div className="w-full max-w-lg text-center">
-          {/* Logo placeholder */}
-          <div className="mb-8 flex justify-center">
-            <div className="text-2xl font-bold" style={{ color: 'var(--purple-deep)' }}>
-              PregnaWell
-            </div>
+          <div className="mb-4 flex justify-center">
+            <img src="/logo/logo-wordmark.png" alt="PregnaWell" className="h-9" />
           </div>
-
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--purple-deep)' }}>
-            مقياس الخصوبة الذكي
-          </h1>
-          <p className="text-base mb-6" style={{ color: '#6B5E7A' }}>
-            بإشراف الأخصائية مها حمّص | PregnaWell
-          </p>
+          <p className="text-sm font-medium mb-8" style={{ color: 'var(--rose-dusty)' }}>مقياس الخصوبة الذكي</p>
 
           <div className="rounded-2xl p-6 mb-8 text-right" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
             <p className="text-base leading-relaxed mb-4" style={{ color: 'var(--text-dark)' }}>
@@ -86,11 +77,10 @@ export default async function AccessPage({ params }: Props) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ backgroundColor: 'var(--bg-cream)' }}>
       <div className="w-full max-w-lg">
-        <div className="mb-8 flex justify-center">
-          <div className="text-2xl font-bold" style={{ color: 'var(--purple-deep)' }}>
-            PregnaWell
-          </div>
+        <div className="mb-4 flex justify-center">
+          <img src="/logo/logo-wordmark.png" alt="PregnaWell" className="h-9" />
         </div>
+        <p className="text-sm font-medium text-center mb-6" style={{ color: 'var(--rose-dusty)' }}>مقياس الخصوبة الذكي</p>
 
         <h1 className="text-3xl font-bold mb-2 text-center" style={{ color: 'var(--purple-deep)' }}>
           مرحباً بعودتكِ
@@ -148,7 +138,9 @@ function ErrorState({ headline, support }: { headline: string; support: string }
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ backgroundColor: 'var(--bg-cream)' }}>
       <div className="w-full max-w-md text-center">
-        <div className="mb-6 text-2xl font-bold" style={{ color: 'var(--purple-deep)' }}>PregnaWell</div>
+        <div className="mb-6 flex justify-center">
+          <img src="/logo/logo-wordmark.png" alt="PregnaWell" className="h-9" />
+        </div>
         <div className="text-5xl mb-6">🔗</div>
         <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--purple-deep)' }}>{headline}</h1>
         <p className="text-base" style={{ color: '#6B5E7A' }}>{support}</p>

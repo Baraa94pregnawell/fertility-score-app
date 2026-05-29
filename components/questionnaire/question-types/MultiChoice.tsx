@@ -39,17 +39,19 @@ export default function MultiChoice({ options, values, onChange, exclusiveValues
             onClick={() => toggle(opt.value)}
             className="w-full text-right px-5 py-4 rounded-xl border-2 transition-all font-medium text-base"
             style={{
-              borderColor: selected ? 'var(--rose-dusty)' : '#E8DFF0',
-              backgroundColor: selected ? '#FDF0F3' : 'white',
-              color: selected ? 'var(--rose-dusty)' : 'var(--text-dark)',
+              borderColor: selected ? '#059669' : '#E8DFF0',
+              backgroundColor: selected ? '#F0FDF4' : 'white',
+              color: selected ? '#059669' : 'var(--text-dark)',
             }}
           >
+            {/* In RTL: first child → right, second child → left */}
             <span className="flex items-center justify-between">
+              <span>{opt.label}</span>
               <span
                 className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0"
                 style={{
-                  borderColor: selected ? 'var(--rose-dusty)' : '#C4B5D0',
-                  backgroundColor: selected ? 'var(--rose-dusty)' : 'transparent',
+                  borderColor: selected ? '#059669' : '#C4B5D0',
+                  backgroundColor: selected ? '#059669' : 'transparent',
                 }}
               >
                 {selected && (
@@ -58,7 +60,6 @@ export default function MultiChoice({ options, values, onChange, exclusiveValues
                   </svg>
                 )}
               </span>
-              <span>{opt.label}</span>
             </span>
           </button>
         )

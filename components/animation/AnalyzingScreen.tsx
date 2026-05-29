@@ -97,8 +97,8 @@ export default function AnalyzingScreen({ slug }: Props) {
         <div className="w-full max-w-md">
           <div className="space-y-4">
             {STEPS.map((step, idx) => {
-              const isActive = idx === currentStep && !completedSteps.includes(idx)
-              const isDone = completedSteps.includes(idx)
+              const isDone = completedSteps.includes(idx) || idx < currentStep
+              const isActive = idx === currentStep && !isDone
               const isVisible = idx <= currentStep
 
               if (!isVisible) return null

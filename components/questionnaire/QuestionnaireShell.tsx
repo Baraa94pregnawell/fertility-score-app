@@ -152,7 +152,7 @@ export default function QuestionnaireShell({ token }: Props) {
             disabled={!canProceed() || submitting}
             className="flex-1 py-3 rounded-xl font-semibold text-base text-white transition-opacity"
             style={{
-              backgroundColor: canProceed() ? 'var(--rose-dusty)' : '#D4C5D8',
+              backgroundColor: canProceed() ? '#059669' : '#D4C5D8',
               opacity: submitting ? 0.7 : 1,
               cursor: canProceed() && !submitting ? 'pointer' : 'not-allowed',
             }}
