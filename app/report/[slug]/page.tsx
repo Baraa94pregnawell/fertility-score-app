@@ -73,6 +73,7 @@ export default async function ReportPage({ params }: Props) {
 
   const narrative = JSON.parse(report.reportContent) as ReportNarrative
   const sectionScores = JSON.parse(report.sectionScores) as SectionScores
+  const triggeredSentences: string[] = narrative.triggeredSentences ?? []
 
   const normalizedCategory = normalizeCategory(report.scoreCategory)
   const scoreColor = categoryColors[normalizedCategory] || '#C06078'
@@ -147,15 +148,34 @@ export default async function ReportPage({ params }: Props) {
           </div>
         ) : null}
 
-        {/* Gemini narrative */}
-        {narrative?.narrative ? (
+        {/* Dynamic insights + Gemini urgency narrative — blended in one card */}
+        {(triggeredSentences.length > 0 || narrative?.narrative) ? (
           <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
-            <div
-              className="text-base leading-loose"
-              style={{ color: 'var(--text-dark)', whiteSpace: 'pre-line' }}
-            >
-              {narrative.narrative}
-            </div>
+            {/* Pre-written dynamic sentences triggered by specific answers */}
+            {triggeredSentences.map((sentence, i) => (
+              <p
+                key={i}
+                className="text-base leading-loose mb-4"
+                style={{ color: 'var(--text-dark)' }}
+              >
+                {sentence}
+              </p>
+            ))}
+
+            {/* Gemini urgency narrative (2–3 paragraphs — booking push) */}
+            {narrative?.narrative ? (
+              <div
+                className={triggeredSentences.length > 0 ? 'mt-2 pt-5 border-t' : ''}
+                style={{ borderColor: '#E8DFF0' }}
+              >
+                <p
+                  className="text-base leading-loose font-medium"
+                  style={{ color: 'var(--purple-deep)', whiteSpace: 'pre-line' }}
+                >
+                  {narrative.narrative}
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : null}
 

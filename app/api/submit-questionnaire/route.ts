@@ -78,6 +78,12 @@ export async function POST(req: NextRequest) {
     const firstName = tokenRecord.userName?.split(' ')[0] || 'user'
     const slug = `${slugify(firstName)}-${generateId()}`
 
+    // Merge triggered sentences into reportContent so they're stored alongside the narrative
+    const finalReportContent = {
+      ...reportContent,
+      triggeredSentences,
+    }
+
     const report = await prisma.report.create({
       data: {
         slug,
@@ -87,7 +93,7 @@ export async function POST(req: NextRequest) {
         fertilityScore: finalScore,
         scoreCategory,
         sectionScores: JSON.stringify(sectionScores),
-        reportContent: JSON.stringify(reportContent),
+        reportContent: JSON.stringify(finalReportContent),
       },
     })
 
