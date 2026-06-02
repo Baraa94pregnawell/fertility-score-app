@@ -153,13 +153,17 @@ export default async function ReportPage({ params }: Props) {
           <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
             {/* Pre-written dynamic sentences triggered by specific answers */}
             {triggeredSentences.map((sentence, i) => (
-              <p
-                key={i}
-                className="text-base leading-loose mb-4"
-                style={{ color: 'var(--text-dark)' }}
-              >
-                {sentence}
-              </p>
+              <div key={i} className="flex gap-3 mb-5 items-start">
+                <span
+                  className="text-sm font-bold flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5"
+                  style={{ backgroundColor: `${scoreColor}18`, color: scoreColor }}
+                >
+                  {i + 1}
+                </span>
+                <p className="text-base leading-loose flex-1" style={{ color: 'var(--text-dark)' }}>
+                  {sentence}
+                </p>
+              </div>
             ))}
 
             {/* Gemini urgency narrative (2–3 paragraphs — booking push) */}
