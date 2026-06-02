@@ -81,18 +81,6 @@ export default function ScoreGauge({ score, scoreCategoryAr }: Props) {
         <path d={`M ${x90} ${y90} A ${r} ${r} 0 0 1 ${x100} ${y100}`}
           fill="none" stroke="#01ae24" strokeWidth="14" strokeLinecap="butt" />
 
-        {/* ── Score number (drawn before needle so needle sits on top) ── */}
-        <text
-          x={cx} y={cy - 6}
-          textAnchor="middle"
-          fontSize="38"
-          fontWeight="bold"
-          fill={displayColor}
-          fontFamily="IBM Plex Arabic, Arial, sans-serif"
-        >
-          {displayScore}
-        </text>
-
         {/* ── Needle ── */}
         <g transform={`rotate(${needleRotation}, ${cx}, ${cy})`}>
           <line
@@ -113,6 +101,17 @@ export default function ScoreGauge({ score, scoreCategoryAr }: Props) {
         <text x={x100} y={y100 + 15} textAnchor="middle" fontSize="11" fill="#9B8BA8"
           fontFamily="IBM Plex Arabic, Arial, sans-serif">100</text>
       </svg>
+
+      {/* Score number — displayed below the dial */}
+      <div className="mt-1 mb-1">
+        <span
+          className="text-5xl font-bold tabular-nums"
+          style={{ color: displayColor, fontFamily: 'IBM Plex Arabic, Arial, sans-serif' }}
+        >
+          {displayScore}
+        </span>
+        <span className="text-lg font-medium ml-1" style={{ color: '#9B8BA8' }}>/100</span>
+      </div>
 
       {/* Disclaimer */}
       <p className="text-xs mt-1 px-4 leading-relaxed" style={{ color: '#9B8BA8' }}>
