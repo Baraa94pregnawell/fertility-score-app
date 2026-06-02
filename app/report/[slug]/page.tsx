@@ -29,16 +29,12 @@ const PILLAR_LABELS: Array<{ key: keyof SectionScores; label: string; weight: st
   { key: 'basicInfo',   label: 'المعلومات الأساسية (BMI)',   weight: '5%'  },
 ]
 
-const categoryColors: Record<string, string> = {
-  level1: '#0D9488',
-  level2: '#059669',
-  level3: '#D97706',
-  level4: '#C06078',
-  // legacy
-  excellent: '#0D9488',
-  good: '#059669',
-  needs_improvement: '#D97706',
-  urgent: '#C06078',
+function getScoreColor(s: number): string {
+  if (s >= 90) return '#01ae24'
+  if (s >= 80) return '#80c12b'
+  if (s >= 70) return '#ffd434'
+  if (s >= 60) return '#f28130'
+  return '#e32f30'
 }
 
 // Badge labels — match user's document exactly
@@ -76,7 +72,7 @@ export default async function ReportPage({ params }: Props) {
   const triggeredSentences: string[] = narrative.triggeredSentences ?? []
 
   const normalizedCategory = normalizeCategory(report.scoreCategory)
-  const scoreColor = categoryColors[normalizedCategory] || '#C06078'
+  const scoreColor = getScoreColor(report.fertilityScore)
   const scoreLevelText = LEVEL_TEXTS[normalizedCategory] || ''
   const badgeAr = categoryAr[normalizedCategory] || ''
 
@@ -97,7 +93,6 @@ export default async function ReportPage({ params }: Props) {
         >
           <ScoreGauge
             score={report.fertilityScore}
-            scoreCategory={normalizedCategory}
             scoreCategoryAr={badgeAr}
           />
         </div>
@@ -111,7 +106,7 @@ export default async function ReportPage({ params }: Props) {
               const section = sectionScores[key]
               if (!section) return null
               const pct = section.pct
-              const barColor = pct >= 75 ? '#059669' : pct >= 50 ? '#D97706' : '#C06078'
+              const barColor = pct >= 90 ? '#01ae24' : pct >= 80 ? '#80c12b' : pct >= 70 ? '#ffd434' : pct >= 60 ? '#f28130' : '#e32f30'
               return (
                 <div key={key}>
                   <div className="flex items-center justify-between mb-1">
