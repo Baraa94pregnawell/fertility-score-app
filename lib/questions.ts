@@ -42,10 +42,6 @@ export const QUESTIONS: Question[] = [
       { value: 'over40', label: 'أكثر من 40 سنة' },
     ],
   },
-  { id: 'qPhone', sectionId: 1, type: 'phone', required: true,
-    text: 'ما هو رقم جوالك؟',
-    helperText: 'سيُستخدم للتواصل معكِ عبر واتساب فقط' },
-
   { id: 'q2', sectionId: 1, type: 'number', required: true,
     text: 'ما هو طولك؟', unit: 'سم', helperText: 'الطول بالسنتيمتر' },
   { id: 'q3', sectionId: 1, type: 'number', required: true,
