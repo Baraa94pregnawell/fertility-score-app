@@ -22,6 +22,7 @@ interface TokenRecord {
 export default function AdminPage() {
   const router = useRouter()
   const [secret, setSecret] = useState('')
+  const [role, setRole] = useState<'admin' | 'readonly'>('admin')
   const [tokens, setTokens] = useState<TokenRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -48,6 +49,8 @@ export default function AdminPage() {
     const s = sessionStorage.getItem('admin_secret') || ''
     if (!s) { router.push('/admin/login'); return }
     setSecret(s)
+    const r = sessionStorage.getItem('admin_role') as 'admin' | 'readonly' | null
+    setRole(r || 'admin')
     setLoading(true)
     fetchTokens(s).finally(() => setLoading(false))
   }, [router, fetchTokens])
@@ -119,11 +122,16 @@ export default function AdminPage() {
 
   return (
     <div style={S.page}>
-      <h1 style={S.h1}>Token Management</h1>
-      <p style={S.sub}>Generate and manage user access tokens</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+        <h1 style={{ ...S.h1, marginBottom: 0 }}>Token Management</h1>
+        {role === 'readonly' && (
+          <span style={{ padding: '2px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '600', backgroundColor: '#EDE9FE', color: '#6D28D9' }}>View Only</span>
+        )}
+      </div>
+      <p style={S.sub}>{role === 'readonly' ? 'View user reports and scores' : 'Generate and manage user access tokens'}</p>
 
-      {/* Generate Token form */}
-      <div style={S.card}>
+      {/* Generate Token form — admin only */}
+      {role === 'admin' && <div style={S.card}>
         <h2 style={S.formH}>Generate New Access Token</h2>
         <form onSubmit={generateToken}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
@@ -155,7 +163,7 @@ export default function AdminPage() {
           {genMessage && <div style={{ marginTop: '12px', color: '#059669', fontSize: '14px' }}>{genMessage}</div>}
           {genError && <div style={{ marginTop: '12px', color: '#DC2626', fontSize: '14px' }}>{genError}</div>}
         </form>
-      </div>
+      </div>}
 
       {/* Token table */}
       <div style={S.card}>
@@ -222,7 +230,7 @@ export default function AdminPage() {
                         {reportCount === 0 && <span style={{ color: '#9CA3AF' }}>—</span>}
                       </td>
                       <td style={S.td}>
-                        {!t.isRevoked && (
+                        {role === 'admin' && !t.isRevoked && (
                           <button
                             onClick={() => setRevokeConfirm(t.id)}
                             style={{ padding: '4px 12px', backgroundColor: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}

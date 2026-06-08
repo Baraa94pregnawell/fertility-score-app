@@ -20,7 +20,9 @@ export default function AdminLogin() {
     })
 
     if (res.ok) {
+      const data = await res.json()
       sessionStorage.setItem('admin_secret', password)
+      sessionStorage.setItem('admin_role', data.role || 'admin')
       router.push('/admin')
     } else {
       setError('Incorrect password. Please try again.')
