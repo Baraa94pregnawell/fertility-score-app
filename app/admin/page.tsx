@@ -191,8 +191,18 @@ export default function AdminPage() {
                     <tr key={t.id}>
                       <td style={S.td}>{t.userEmail}</td>
                       <td style={S.td}>{t.userName || '—'}</td>
-                      <td style={S.td}>{new Date(t.createdAt).toLocaleDateString('en-GB')}</td>
-                      <td style={S.td}>{t.usedAt ? new Date(t.usedAt).toLocaleDateString('en-GB') : '—'}</td>
+                      <td style={S.td}>
+                        <div>{new Date(t.createdAt).toLocaleDateString('en-GB')}</div>
+                        <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{new Date(t.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div>
+                      </td>
+                      <td style={S.td}>
+                        {t.usedAt ? (
+                          <>
+                            <div>{new Date(t.usedAt).toLocaleDateString('en-GB')}</div>
+                            <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{new Date(t.usedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div>
+                          </>
+                        ) : '—'}
+                      </td>
                       <td style={S.td}>
                         <span style={{ padding: '2px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '600', backgroundColor: status.bg, color: status.color }}>
                           {status.label}
@@ -200,9 +210,14 @@ export default function AdminPage() {
                       </td>
                       <td style={S.td}>
                         {t.submissions.map(s => s.report ? (
-                          <a key={s.id} href={`/report/${s.report.slug}`} target="_blank" style={{ color: '#3D2870', textDecoration: 'underline', fontSize: '13px', display: 'block' }}>
-                            Score: {s.report.fertilityScore}
-                          </a>
+                          <div key={s.id} style={{ marginBottom: '4px' }}>
+                            <a href={`/report/${s.report.slug}`} target="_blank" style={{ color: '#3D2870', textDecoration: 'underline', fontSize: '13px' }}>
+                              Score: {s.report.fertilityScore}
+                            </a>
+                            <div style={{ fontSize: '11px', color: '#9CA3AF' }}>
+                              {new Date(s.submittedAt).toLocaleDateString('en-GB')} · {new Date(s.submittedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
                         ) : null)}
                         {reportCount === 0 && <span style={{ color: '#9CA3AF' }}>—</span>}
                       </td>
