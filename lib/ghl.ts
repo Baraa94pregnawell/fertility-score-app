@@ -21,7 +21,7 @@ export async function sendAccessWebhook(payload: {
 /** Fires outbound webhook to GHL — triggers Email #2 (report ready) */
 export async function sendReportWebhook(payload: {
   email: string
-  firstName: string
+  firstName?: string
   phone?: string
   reportUrl: string
   score: number

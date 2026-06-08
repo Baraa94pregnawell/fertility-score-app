@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 7. Build slug and save report
-    const firstName = tokenRecord.userName?.split(' ')[0] || 'user'
+    const firstName = tokenRecord.userName?.split(' ')[0] || ''
     const slug = `${slugify(firstName)}-${generateId()}`
 
     // Merge triggered sentences into reportContent so they're stored alongside the narrative
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     const phone = (answers['qPhone'] as string) || undefined
     sendReportWebhook({
       email: tokenRecord.userEmail,
-      firstName: firstName,
+      ...(firstName && { firstName }),
       phone,
       reportUrl,
       score: finalScore,
