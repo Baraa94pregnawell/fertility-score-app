@@ -32,6 +32,7 @@ export default function AdminPage() {
   const [genMessage, setGenMessage] = useState('')
   const [genError, setGenError] = useState('')
   const [revokeConfirm, setRevokeConfirm] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   const fetchTokens = useCallback(async (adminSecret: string, q = '') => {
     const res = await fetch(`/api/admin/tokens?search=${encodeURIComponent(q)}`, {
@@ -97,6 +98,16 @@ export default function AdminPage() {
       body: JSON.stringify({ tokenId }),
     })
     setRevokeConfirm(null)
+    fetchTokens(secret, search)
+  }
+
+  const deleteToken = async (tokenId: string) => {
+    await fetch('/api/admin/delete-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+      body: JSON.stringify({ tokenId }),
+    })
+    setDeleteConfirm(null)
     fetchTokens(secret, search)
   }
 
@@ -186,17 +197,18 @@ export default function AdminPage() {
             <table style={S.table}>
               <thead>
                 <tr>
-                  {['Email', 'Name', 'Created', 'Used', 'Status', 'Reports', 'Actions'].map(h => (
+                  {['#', 'Email', 'Name', 'Created', 'Used', 'Status', 'Reports', 'Actions'].map(h => (
                     <th key={h} style={S.th}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {tokens.map(t => {
+                {tokens.map((t, index) => {
                   const status = getStatus(t)
                   const reportCount = t.submissions.filter(s => s.report).length
                   return (
                     <tr key={t.id}>
+                      <td style={{ ...S.td, color: '#9CA3AF', fontWeight: '600', width: '40px' }}>{index + 1}</td>
                       <td style={S.td}>{t.userEmail}</td>
                       <td style={S.td}>{t.userName || '—'}</td>
                       <td style={S.td}>
@@ -229,15 +241,25 @@ export default function AdminPage() {
                         ) : null)}
                         {reportCount === 0 && <span style={{ color: '#9CA3AF' }}>—</span>}
                       </td>
-                      <td style={S.td}>
-                        {role === 'admin' && !t.isRevoked && (
-                          <button
-                            onClick={() => setRevokeConfirm(t.id)}
-                            style={{ padding: '4px 12px', backgroundColor: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
-                          >
-                            Revoke
-                          </button>
-                        )}
+                      <td style={{ ...S.td, whiteSpace: 'nowrap' as const }}>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          {role === 'admin' && !t.isRevoked && (
+                            <button
+                              onClick={() => setRevokeConfirm(t.id)}
+                              style={{ padding: '4px 12px', backgroundColor: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+                            >
+                              Revoke
+                            </button>
+                          )}
+                          {role === 'admin' && (
+                            <button
+                              onClick={() => setDeleteConfirm(t.id)}
+                              style={{ padding: '4px 12px', backgroundColor: '#F3F4F6', color: '#6B7280', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -265,6 +287,32 @@ export default function AdminPage() {
               </button>
               <button
                 onClick={() => setRevokeConfirm(null)}
+                style={{ flex: 1, padding: '10px', backgroundColor: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete dialog */}
+      {deleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px', maxWidth: '400px', width: '90%' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>Delete this contact?</h3>
+            <p style={{ color: '#6B7280', fontSize: '14px', marginBottom: '24px' }}>
+              This will permanently delete the token, all submissions, and all reports for this contact. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => deleteToken(deleteConfirm)}
+                style={{ flex: 1, padding: '10px', backgroundColor: '#111827', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
                 style={{ flex: 1, padding: '10px', backgroundColor: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
               >
                 Cancel
