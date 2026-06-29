@@ -64,8 +64,13 @@ function normalizeCategory(cat: string): string {
 export default async function ReportPage({ params }: Props) {
   const { slug } = params
 
-  const report = await prisma.report.findUnique({ where: { slug } })
+  const report = await prisma.report.findUnique({
+    where: { slug },
+    include: { submission: { include: { token: { select: { source: true } } } } },
+  })
   if (!report) notFound()
+
+  const isWebinar = report.submission?.token?.source === 'webinar'
 
   const narrative = JSON.parse(report.reportContent) as ReportNarrative
   const sectionScores = JSON.parse(report.sectionScores) as SectionScores
@@ -179,9 +184,11 @@ export default async function ReportPage({ params }: Props) {
         ) : null}
 
         {/* CTA Block 1 — Mid */}
-        <div className="mb-6">
-          <CTAButton scoreCategory={normalizedCategory} variant="mid" bookingUrl={BOOKING_URL} />
-        </div>
+        {!isWebinar && (
+          <div className="mb-6">
+            <CTAButton scoreCategory={normalizedCategory} variant="mid" bookingUrl={BOOKING_URL} />
+          </div>
+        )}
 
         {/* Closing line */}
         <div className="text-center mb-6 px-4">
@@ -194,9 +201,11 @@ export default async function ReportPage({ params }: Props) {
         </div>
 
         {/* CTA Block 2 — Bottom */}
-        <div className="mb-6">
-          <CTAButton scoreCategory={normalizedCategory} variant="bottom" bookingUrl={BOOKING_URL} />
-        </div>
+        {!isWebinar && (
+          <div className="mb-6">
+            <CTAButton scoreCategory={normalizedCategory} variant="bottom" bookingUrl={BOOKING_URL} />
+          </div>
+        )}
 
         {/* Footer */}
         <div className="text-center text-sm" style={{ color: '#9B8BA8' }}>
@@ -205,21 +214,23 @@ export default async function ReportPage({ params }: Props) {
       </div>
 
       {/* Sticky mobile CTA */}
-      <div
-        className="fixed bottom-0 left-0 right-0 px-4 py-3 flex items-center justify-between gap-4 md:hidden"
-        style={{ backgroundColor: 'var(--purple-deep)', zIndex: 50 }}
-      >
-        <span className="text-white text-sm font-medium flex-1">مكالمتكِ التقييمية مدرجة في باقتكِ</span>
-        <a
-          href={BOOKING_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0"
-          style={{ backgroundColor: 'var(--rose-dusty)', color: 'white' }}
+      {!isWebinar && (
+        <div
+          className="fixed bottom-0 left-0 right-0 px-4 py-3 flex items-center justify-between gap-4 md:hidden"
+          style={{ backgroundColor: 'var(--purple-deep)', zIndex: 50 }}
         >
-          احجزي الآن
-        </a>
-      </div>
+          <span className="text-white text-sm font-medium flex-1">مكالمتكِ التقييمية مدرجة في باقتكِ</span>
+          <a
+            href={BOOKING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0"
+            style={{ backgroundColor: 'var(--rose-dusty)', color: 'white' }}
+          >
+            احجزي الآن
+          </a>
+        </div>
+      )}
     </div>
   )
 }

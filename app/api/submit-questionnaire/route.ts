@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { validateToken } from '@/lib/tokens'
 import { calculateScore } from '@/lib/scoring'
 import { generateReport } from '@/lib/gemini'
-import { sendReportWebhook } from '@/lib/ghl'
+import { sendReportWebhook, sendWebinarReportWebhook } from '@/lib/ghl'
 import { buildReportUrl } from '@/lib/tokens'
 import { prisma } from '@/lib/prisma'
 import type { Answers } from '@/lib/scoring'
@@ -100,14 +100,18 @@ export async function POST(req: NextRequest) {
     // 8. Fire-and-forget: notify GHL (triggers Email #2)
     const reportUrl = buildReportUrl(report.slug)
     const phone = (answers['qPhone'] as string) || undefined
-    sendReportWebhook({
-      email: tokenRecord.userEmail,
-      ...(firstName && { firstName }),
-      phone,
-      reportUrl,
-      score: finalScore,
-      scoreCategory,
-    }).then(() => {
+    const isWebinar = tokenRecord.source === 'webinar'
+    const reportWebhookPromise = isWebinar
+      ? sendWebinarReportWebhook({ email: tokenRecord.userEmail, reportUrl, score: finalScore, scoreCategory })
+      : sendReportWebhook({
+          email: tokenRecord.userEmail,
+          ...(firstName && { firstName }),
+          phone,
+          reportUrl,
+          score: finalScore,
+          scoreCategory,
+        })
+    reportWebhookPromise.then(() => {
       prisma.report.update({
         where: { id: report.id },
         data: { ghlWebhookSentAt: new Date() },
