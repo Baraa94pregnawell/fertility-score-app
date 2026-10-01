@@ -1,23 +1,22 @@
-// Deterministic fertility score calculator — new weighted percentage system.
+// 5-Track fertility scoring engine.
 // finalScore = (totalEarned / totalMax) × 100
+// Each track score = trackEarned / trackMax × 100
 
 export interface Answers { [questionId: string]: string | string[] | number }
 
-export interface SectionScore { earned: number; max: number; pct: number }
+export type TrackKey = 'aman' | 'ayad' | 'muatilat' | 'iltihab' | 'binaa'
 
-export interface SectionScores {
-  basicInfo: SectionScore
-  diet: SectionScore
-  supplements: SectionScore
-  stress: SectionScore
-  exercise: SectionScore
-  kitchen: SectionScore
-  personalCare: SectionScore
-  menstrual: SectionScore
-  caffeine: SectionScore
-  infoSources: SectionScore
-  thyroid: SectionScore
-  maleFactor: SectionScore
+export interface Box {
+  name: string
+  questionId: string
+  pointsLost: number
+}
+
+export interface TrackResult {
+  earned: number
+  max: number
+  pct: number
+  boxes: Box[]
 }
 
 export interface ScoreResult {
@@ -25,608 +24,1068 @@ export interface ScoreResult {
   scoreCategory: string
   scoreCategoryAr: string
   scoreLevelText: string
-  sectionScores: SectionScores
+  tracks: Record<TrackKey, TrackResult>
+  topTrack: TrackKey | null
+  secondTrack: TrackKey | null
+  intersectionPoint: string
+  totalFactors: number
+  highImpactFactors: number
+  ageCategory: 'a' | 'b' | 'c' | 'd'
+  maritalStatus: 'married' | 'engaged' | 'single'
+  medicalBoxItems: string[]
+  maleFactorVariant: 'a' | 'b' | 'c' | null
+  tableIntroText: string
   triggeredSentences: string[]
   bmi: number
+  // Kept for backward compat with old reports (empty for new)
+  sectionScores: Record<string, unknown>
+}
+
+// ── Level texts ────────────────────────────────────────────────────────────
+export const LEVEL_TEXTS: Record<string, string> = {
+  level1: 'صورتكِ قوية، لكن مساراً واحداً نشطاً يكفي لإرباك قرار التبويض. والفجوات القليلة المركّزة هي الأسرع استجابة، إذا عولجت من المكان الصحيح.',
+  level2: 'جسمكِ يعمل، لكنه يتلقى إشارات تسحب من قدرته على التبويض كل شهر. الفجوات واضحة، ومعالجتها بالترتيب الصحيح هي ما يصنع الفرق.',
+  level3: 'جسمكِ يتلقى إشارات مربكة من أكثر من مسار، ويعطيكِ علامات منذ فترة. هذا ليس قدراً ولا حظاً، وكل ما يظهر في صورتكِ قابل للتغيير، إذا بدأتِ من المكان الصحيح.',
+  level4: 'جسمكِ يتلقى إشارات مربكة من مسارات متعددة في الوقت نفسه. هذا لا يعني أن الحمل بعيد، بل يعني أن جسمكِ يحتاج أن تُرتَّب هذه الإشارات قبل أي شيء آخر.',
 }
 
 export const CLOSING_LINE = 'هذه النتيجة ليست حكماً على جسمك - هي نقطة بداية.\nأنتِ الآن تعرفين أكثر مما كنتِ تعرفينه قبل 10 دقائق.\nوالخطوة التالية هي تحويل هذه المعرفة إلى خطة حقيقية مخصصة لك.'
 
-export const LEVEL_TEXTS: Record<string, string> = {
-  level1: 'نتيجتك تخبرنا أن أساسك الصحي قوي - عاداتك الغذائية ونمط حياتك يدعمان بيئة هرمونية مناسبة للخصوبة.\nهذا لا يعني أن كل شيء مثالي - لكنه يعني أنك على الطريق الصحيح.\nما تحتاجينه الآن ليس تغييراً جذرياً، بل ضبطاً دقيقاً في التفاصيل التي ستفرق في نتيجتك.',
-  level2: 'نتيجتك تكشف أن جسمك يعمل - لكنه لا يعمل بكامل طاقته.\nهناك عوامل واضحة تسحب من رصيدك الهرموني يومياً دون أن تشعري بها مباشرةً.\nالفجوات التي ظهرت في نتيجتك ليست عشوائية - هي تحديداً الأماكن التي يحتاج فيها جسمك دعماً حقيقياً لتتحول من \'تعمل\' إلى \'مهيأة للحمل\'.',
-  level3: 'نتيجتك تخبرنا أن جسمك يتحمل ضغطاً هرمونياً حقيقياً - وأنه يعطيك إشارات منذ فترة لكن ربما لم تكوني تعرفين كيف تقرئيها.\nما تمرين به ليس قدراً ولا حظاً - هناك أسباب واضحة تظهر في إجاباتك تشرح لماذا يصعب على جسمك الوصول للحمل.\nالخبر الجيد: كل ما يظهر في نتيجتك قابل للتغيير - لكنه يحتاج خطة واضحة وليس تجارب عشوائية.',
-  level4: 'نتيجتك تكشف أن هناك عوامل متعددة تعمل ضد خصوبتك في نفس الوقت - وهذا يفسر لماذا تشعرين أنك تحاولين بدون نتيجة.\nجسمك ليس معطوباً - لكنه يعيش في بيئة لا تدعم التبويض والحمل بالشكل المطلوب.\nما تحتاجينه ليس مكملاً إضافياً أو نظاماً غذائياً جديداً - تحتاجين إعادة بناء حقيقية من الأساس، خطوة خطوة، بإشراف متخصص.',
+// ── Track info ─────────────────────────────────────────────────────────────
+export const TRACK_INFO: Record<TrackKey, { label: string; description: string; howItEnters: string }> = {
+  aman:      { label: 'الأمان',              description: 'النوم، التوتر، والتوازن الأدرينالي', howItEnters: 'الدماغ والغدة الكظرية' },
+  ayad:      { label: 'الأيض',               description: 'الأكل، الإنسولين، والوزن',           howItEnters: 'المبيض والإنسولين' },
+  muatilat:  { label: 'المعطلات الهرمونية', description: 'التعرض للمواد الكيميائية',             howItEnters: 'الرسائل بين الدماغ والمبيض' },
+  iltihab:   { label: 'الالتهاب',            description: 'جودة البيئة التناسلية',               howItEnters: 'بيئة البويضة والبطانة' },
+  binaa:     { label: 'البناء',              description: 'المكملات والمواد الخام',               howItEnters: 'إنتاج الهرمونات' },
 }
 
-function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)) }
+// Intersection: given top 2 tracks (lowest %), what is the shared outcome?
+// Priority: التبويض > جودة البويضة > انتظام الدورة
+const INTERSECTION: Record<string, string> = {
+  'aman-ayad':     'التبويض',
+  'aman-muatilat': 'التبويض',
+  'aman-iltihab':  'انتظام الدورة',
+  'aman-binaa':    'انتظام الدورة',
+  'ayad-muatilat': 'التبويض',
+  'ayad-iltihab':  'جودة البويضة',
+  'ayad-binaa':    'جودة البويضة',
+  'muatilat-iltihab': 'جودة البويضة',
+  'muatilat-binaa':   'انتظام الدورة',
+  'iltihab-binaa':    'جودة البويضة',
+}
+
+function intersectionKey(a: TrackKey, b: TrackKey): string {
+  const order: TrackKey[] = ['aman', 'ayad', 'muatilat', 'iltihab', 'binaa']
+  return order.indexOf(a) < order.indexOf(b) ? `${a}-${b}` : `${b}-${a}`
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 function getStr(a: Answers, id: string): string { return (a[id] as string) ?? '' }
 function getArr(a: Answers, id: string): string[] {
   const v = a[id]; if (!v) return []
   return Array.isArray(v) ? v : [String(v)]
 }
-function sec(earned: number, max: number): SectionScore {
-  return { earned, max, pct: max > 0 ? Math.round((earned / max) * 100) : 0 }
+
+interface QResult {
+  earned: number
+  weight: number
+  tracks: TrackKey[]
+  // Optional box: the box may appear in tracks different from the question's tracks
+  box?: { name: string; tracks: TrackKey[] }
 }
 
+// Track accumulators
+interface TrackAccum { earned: number; max: number; boxes: Box[] }
+
 // ── BMI ────────────────────────────────────────────────────────────────────
-function calcBmi(a: Answers): { bmiPoints: number; bmi: number } {
+function calcBmi(a: Answers): { bmiPoints: number; bmi: number; bmiBox?: { name: string; tracks: TrackKey[] } } {
   const h = Number(a['q2']) || 0
   const w = Number(a['q3']) || 0
   if (!h || !w) return { bmiPoints: 0, bmi: 0 }
   const bmi = w / ((h / 100) ** 2)
+  const bmiRounded = Math.round(bmi * 10) / 10
   let bmiPoints = 0
-  if (bmi >= 18.5 && bmi <= 24.9) bmiPoints = 4
-  else if (bmi >= 25 && bmi <= 27.9) bmiPoints = 3
-  else if (bmi >= 28 && bmi <= 30) bmiPoints = 2
-  else if (bmi > 30) bmiPoints = 1
-  else bmiPoints = 1 // under 18.5
-  return { bmiPoints, bmi: Math.round(bmi * 10) / 10 }
-}
-
-// ── Section 1: basicInfo (max 7) ───────────────────────────────────────────
-function scoreBasicInfo(a: Answers, bmiPoints: number): number {
-  const q1map: Record<string, number> = { under25: 3, '25to30': 3, '31to35': 2, '36to40': 1, over40: 0 }
-  return (q1map[getStr(a, 'q1')] ?? 0) + bmiPoints
-}
-
-// ── Section 2: diet (max 64) ───────────────────────────────────────────────
-function scoreDiet(a: Answers): number {
-  let total = 0
-
-  // Q4 — diets (weight 3)
-  const q4 = getArr(a, 'q4')
-  if (q4.includes('none')) total += 3
-  else {
-    const count = q4.length
-    const hasIfOrLowcarb = q4.some(v => ['if','lowcarb'].includes(v))
-    const hasKetoOrVegan = q4.some(v => ['keto','vegan'].includes(v))
-    if (count >= 3) total += 0
-    else if (hasKetoOrVegan) total += 1
-    else if (hasIfOrLowcarb) total += 2
-    else total += 2
+  let bmiBox: { name: string; tracks: TrackKey[] } | undefined
+  if (bmi >= 18.5 && bmi <= 24.9) { bmiPoints = 4 }
+  else if (bmi >= 25 && bmi <= 27.9) { bmiPoints = 3 }
+  else if (bmi >= 28 && bmi <= 30) { bmiPoints = 2 }
+  else if (bmi > 30) {
+    bmiPoints = 1
+    bmiBox = { name: 'وزن مرتفع', tracks: ['ayad', 'iltihab'] }
+  } else {
+    // < 18.5
+    bmiPoints = 1
+    bmiBox = { name: 'وزن منخفض', tracks: ['aman'] }
   }
-
-  // Q5 (weight 4)
-  const q5m: Record<string, number> = { no: 4, sometimes: 2, always: 0, dontknow: 1 }
-  total += q5m[getStr(a,'q5')] ?? 0
-
-  // Q6 (weight 3)
-  const q6m: Record<string, number> = { no: 3, sometimes: 2, avoid: 1, dontknow: 1 }
-  total += q6m[getStr(a,'q6')] ?? 0
-
-  // Q9 (weight 3)
-  const q9m: Record<string, number> = { noticeAvoid: 3, noticeIgnore: 2, noNotice: 1, neverRead: 0 }
-  total += q9m[getStr(a,'q9')] ?? 0
-
-  // Q10 (weight 4)
-  const q10m: Record<string, number> = { threeplus: 4, two: 3, one: 1, none: 0 }
-  total += q10m[getStr(a,'q10')] ?? 0
-
-  // Q11 (weight 3)
-  const q11m: Record<string, number> = { two: 3, one: 2, threeplus: 2, none: 0 }
-  total += q11m[getStr(a,'q11')] ?? 0
-
-  // Q12 (weight 3)
-  const q12m: Record<string, number> = { knowApply: 3, knowNoApply: 2, dontknow: 1, neverThought: 0 }
-  total += q12m[getStr(a,'q12')] ?? 0
-
-  // Q13 (weight 2)
-  const q13m: Record<string, number> = { never: 2, sometimes: 1, regularly: 0 }
-  total += q13m[getStr(a,'q13')] ?? 0
-
-  // Q15 (weight 4, multi — worst)
-  const q15 = getArr(a, 'q15')
-  if (q15.includes('none')) total += 4
-  else if (q15.includes('crash') || q15.includes('longFast')) total += 0
-  else if (q15.includes('skipMeal')) total += 1
-  else if (q15.includes('skipBreakfast')) total += 2
-  else total += 4
-
-  // Q16 (weight 4, multi — worst)
-  const q16 = getArr(a, 'q16')
-  if (q16.includes('none')) total += 4
-  else if (q16.includes('ozempic') || q16.includes('otherDrugs')) total += 0
-  else if (q16.includes('saxenda') || q16.includes('mounjaro')) total += 1
-  else if (q16.includes('surgery')) total += 1
-  else total += 4
-
-  // Q17 (weight 4, multi — worst)
-  const q17 = getArr(a, 'q17')
-  if (q17.includes('aspartame')) total += 0
-  else if (q17.includes('sucralose') || q17.includes('stevia')) total += 1
-  else if (q17.includes('sugar')) total += 2
-  else if (q17.includes('honey')) total += 3
-  else total += 4 // none
-
-  // qRestaurant (weight 4)
-  const restMap: Record<string, number> = { rarely: 4, onceTwice: 3, threeFour: 1, fivePlus: 0, everyday: 0 }
-  total += restMap[getStr(a,'qRestaurant')] ?? 0
-
-  // qSnacksFreq (weight 3)
-  const sfMap: Record<string, number> = { never: 3, once: 3, twice: 2, threePlus: 0, insteadOfMeals: 0 }
-  total += sfMap[getStr(a,'qSnacksFreq')] ?? 0
-
-  // qSnackType (weight 3, multi)
-  const st = getArr(a, 'qSnackType')
-  const unhealthySnacks = ['chips','chocolate','biscuit']
-  const healthySnacks = ['nuts','fruit','yogurt']
-  if (st.includes('noSnacks') || st.length === 0) total += 3
-  else if (st.every(v => healthySnacks.includes(v))) total += 3
-  else if (st.some(v => unhealthySnacks.includes(v)) && st.some(v => healthySnacks.includes(v))) total += 1
-  else total += 0 // only unhealthy
-
-  // qBreakfast (weight 4)
-  const bfMap: Record<string, number> = { yesHome: 4, sometimes: 2, onTheGo: 1, never: 0 }
-  total += bfMap[getStr(a,'qBreakfast')] ?? 0
-
-  // qWorkMeal (weight 3)
-  const wmMap: Record<string, number> = { homePrepared: 3, delivery: 2, whatever: 1, skipLunch: 0, snacksOnly: 0 }
-  total += wmMap[getStr(a,'qWorkMeal')] ?? 0
-
-  // qSocialFreq (weight 2)
-  const sfqMap: Record<string, number> = { rarely: 2, monthly: 2, onceTwiceWeek: 1, threePlusWeek: 0, daily: 0 }
-  total += sfqMap[getStr(a,'qSocialFreq')] ?? 0
-
-  // qSocialFood (weight 2, multi — worst)
-  const sf2 = getArr(a, 'qSocialFood')
-  if (sf2.includes('sweets') || sf2.includes('takeout')) total += 0
-  else if (sf2.includes('fried')) total += 1
-  else total += 2 // balanced or homemade
-
-  // qSweetsRelation (weight 4)
-  const srMap: Record<string, number> = { dontLike: 4, sometimes: 3, craveContinuously: 1, soothingCraving: 0 }
-  total += srMap[getStr(a,'qSweetsRelation')] ?? 0
-
-  // qSweetsAwareness (weight 2)
-  const saMap: Record<string, number> = { knowAndDeal: 2, knowEmotional: 1, thoughtNoAnswer: 1, neverThought: 0 }
-  total += saMap[getStr(a,'qSweetsAwareness')] ?? 0
-
-  return total // max 64
+  return { bmiPoints, bmi: bmiRounded, bmiBox }
 }
 
-// ── Section 3: supplements (max 14) ───────────────────────────────────────
-function scoreSupplements(a: Answers): number {
-  let total = 0
+// ── Per-question scoring ────────────────────────────────────────────────────
 
-  // Q18 (weight 3)
-  const q18m: Record<string, number> = { '1to2': 3, '3to5': 2, none: 1, '6plus': 0 }
-  total += q18m[getStr(a,'q18')] ?? 0
+function scoreQ1(a: Answers): QResult {
+  const map: Record<string, number> = { under25: 3, '25to30': 3, '31to35': 2, '36to40': 1, '41to45': 0, over40: 0, over45: 0 }
+  return { earned: map[getStr(a, 'q1')] ?? 0, weight: 3, tracks: [] }
+}
 
-  // Q19 (weight 4)
+function scoreQ4(a: Answers): QResult {
+  const q4 = getArr(a, 'q4')
+  let earned = 3
+  let boxName: string | undefined
+  if (!q4.includes('none')) {
+    const count = q4.filter(v => v !== 'none').length
+    const hasKeto = q4.some(v => ['keto', 'vegan', 'carnivore'].includes(v))
+    if (count >= 3) { earned = 0; boxName = '3 أنظمة غذائية أو أكثر' }
+    else if (hasKeto) { earned = 1; boxName = 'كيتو / نباتي كامل' }
+    else if (q4.some(v => ['if', 'lowcarb'].includes(v))) { earned = 2 }
+    else earned = 2
+  }
+  return {
+    earned, weight: 3, tracks: ['aman'],
+    ...(earned < 1.5 && boxName ? { box: { name: boxName, tracks: ['aman'] } } : {}),
+  }
+}
+
+function scoreQ5(a: Answers): QResult {
+  const map: Record<string, number> = { no: 4, sometimes: 2, always: 0, dontknow: 1 }
+  const earned = map[getStr(a, 'q5')] ?? 0
+  return {
+    earned, weight: 4, tracks: ['aman'],
+    ...(earned < 2 ? { box: { name: 'تقليص حاد للنشويات', tracks: ['aman'] } } : {}),
+  }
+}
+
+function scoreQ6(a: Answers): QResult {
+  const map: Record<string, number> = { no: 3, sometimes: 2, avoid: 1, dontknow: 1 }
+  const earned = map[getStr(a, 'q6')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['binaa'],
+    ...(earned < 1.5 ? { box: { name: 'حذف الحليب كلياً', tracks: ['binaa'] } } : {}),
+  }
+}
+
+function scoreQ9(a: Answers): QResult {
+  const map: Record<string, number> = { noticeAvoid: 3, noticeIgnore: 2, noNotice: 1, neverRead: 0 }
+  const earned = map[getStr(a, 'q9')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['muatilat'],
+    ...(earned < 1.5 ? { box: { name: 'لا تقرأ مكونات الطعام', tracks: ['muatilat'] } } : {}),
+  }
+}
+
+function scoreQ10(a: Answers): QResult {
+  const map: Record<string, number> = { threeplus: 4, two: 3, one: 1, none: 0 }
+  const earned = map[getStr(a, 'q10')] ?? 0
+  return {
+    earned, weight: 4, tracks: ['iltihab'],
+    ...(earned < 2 ? { box: { name: 'خضار منخفضة جداً', tracks: ['iltihab'] } } : {}),
+  }
+}
+
+function scoreQ11(a: Answers): QResult {
+  const map: Record<string, number> = { two: 3, one: 2, threeplus: 2, none: 0 }
+  const earned = map[getStr(a, 'q11')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['iltihab'],
+    ...(earned < 1.5 ? { box: { name: 'فاكهة منخفضة جداً', tracks: ['iltihab'] } } : {}),
+  }
+}
+
+function scoreQ12(a: Answers): QResult {
+  const map: Record<string, number> = { knowApply: 3, knowNoApply: 2, dontknow: 1, neverThought: 0 }
+  const earned = map[getStr(a, 'q12')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['binaa'],
+    ...(earned < 1.5 ? { box: { name: 'لا تعرف احتياج البروتين', tracks: ['binaa'] } } : {}),
+  }
+}
+
+function scoreQ13(a: Answers): QResult {
+  const map: Record<string, number> = { never: 2, sometimes: 1, regularly: 0 }
+  const earned = map[getStr(a, 'q13')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['binaa'],
+    ...(earned < 1 ? { box: { name: 'بروتين باودر يومياً', tracks: ['binaa'] } } : {}),
+  }
+}
+
+function scoreQ15(a: Answers): QResult {
+  const q15 = getArr(a, 'q15')
+  let earned = 4
+  let boxName: string | undefined
+  if (!q15.includes('none')) {
+    if (q15.includes('crash') && q15.includes('longFast')) { earned = 0; boxName = 'كراش دايت وصيام طويل' }
+    else if (q15.includes('crash')) { earned = 0; boxName = 'كراش دايت' }
+    else if (q15.includes('longFast')) { earned = 0; boxName = 'صيام طويل' }
+    else if (q15.includes('skipMeal')) { earned = 1; boxName = 'حذف وجبة كاملة' }
+    else if (q15.includes('skipBreakfast')) { earned = 2 }
+    else earned = 4
+  }
+  return {
+    earned, weight: 4, tracks: ['aman'],
+    ...(earned < 2 && boxName ? { box: { name: boxName, tracks: ['aman'] } } : {}),
+  }
+}
+
+function scoreQ16(a: Answers): QResult {
+  const q16 = getArr(a, 'q16')
+  let earned = 4
+  let boxName: string | undefined
+  if (!q16.includes('none') && q16.length > 0) {
+    if (q16.includes('ozempic') || q16.includes('otherDrugs')) { earned = 0; boxName = 'أدوية حقن إنقاص الوزن' }
+    else if (q16.includes('saxenda') || q16.includes('mounjaro')) { earned = 1; boxName = 'حقن إنقاص الوزن' }
+    else if (q16.includes('surgery')) { earned = 1; boxName = 'تكميم / ربط معدة' }
+    else earned = 4
+  }
+  return {
+    earned, weight: 4, tracks: ['ayad'],
+    ...(earned < 2 && boxName ? { box: { name: boxName, tracks: ['ayad'] } } : {}),
+  }
+}
+
+function scoreQ17(a: Answers): QResult {
+  const q17 = getArr(a, 'q17')
+  let earned = 4
+  let boxName: string | undefined
+  if (q17.includes('aspartame')) { earned = 0; boxName = 'محليات صناعية (أسبارتام)' }
+  else if (q17.includes('sucralose')) { earned = 1; boxName = 'محليات صناعية (سكرالوز)' }
+  else if (q17.includes('stevia')) { earned = 2 }
+  else if (q17.includes('sugar')) { earned = 2 }
+  else if (q17.includes('honey')) { earned = 3 }
+  // else none → 4
+  return {
+    earned, weight: 4, tracks: ['iltihab'],
+    ...(earned < 2 && boxName ? { box: { name: boxName, tracks: ['iltihab'] } } : {}),
+  }
+}
+
+function scoreQRestaurant(a: Answers): QResult {
+  const map: Record<string, number> = { rarely: 4, onceTwice: 3, threeFour: 1, fivePlus: 0, everyday: 0 }
+  const earned = map[getStr(a, 'qRestaurant')] ?? 0
+  return {
+    earned, weight: 4, tracks: ['ayad', 'iltihab'],
+    ...(earned < 2 ? { box: { name: 'مطاعم كثيرة أسبوعياً', tracks: ['ayad', 'iltihab'] } } : {}),
+  }
+}
+
+function scoreQSnacksFreq(a: Answers): QResult {
+  const map: Record<string, number> = { never: 3, once: 3, twice: 2, threePlus: 0, insteadOfMeals: 0 }
+  const earned = map[getStr(a, 'qSnacksFreq')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['ayad'],
+    ...(earned < 1.5 ? { box: { name: 'سناكات متكررة بدل وجبات', tracks: ['ayad'] } } : {}),
+  }
+}
+
+function scoreQSnackType(a: Answers): QResult {
+  const st = getArr(a, 'qSnackType')
+  const unhealthy = ['chips', 'chocolate', 'biscuit']
+  const healthy = ['nuts', 'fruit', 'yogurt']
+  let earned = 3
+  let boxName: string | undefined
+  if (st.includes('noSnacks') || st.length === 0) { earned = 3 }
+  else if (st.every(v => healthy.includes(v))) { earned = 3 }
+  else if (st.some(v => unhealthy.includes(v)) && st.some(v => healthy.includes(v))) { earned = 1 }
+  else if (st.some(v => unhealthy.includes(v))) { earned = 0; boxName = 'سناكات غير صحية فقط' }
+  return {
+    earned, weight: 3, tracks: ['ayad'],
+    ...(earned < 1.5 && boxName ? { box: { name: boxName, tracks: ['ayad'] } } : {}),
+  }
+}
+
+function scoreQBreakfast(a: Answers): QResult {
+  const map: Record<string, number> = { yesHome: 4, sometimes: 2, onTheGo: 1, never: 0 }
+  const earned = map[getStr(a, 'qBreakfast')] ?? 0
+  return {
+    earned, weight: 4, tracks: ['aman'],
+    ...(earned < 2 ? { box: { name: 'حذف الفطور دائماً', tracks: ['aman'] } } : {}),
+  }
+}
+
+function scoreQWorkMeal(a: Answers): QResult {
+  const map: Record<string, number> = { homePrepared: 3, delivery: 2, whatever: 1, skipLunch: 0, snacksOnly: 0 }
+  const earned = map[getStr(a, 'qWorkMeal')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['ayad'],
+    ...(earned < 1.5 ? { box: { name: 'وجبات عمل غير منظمة', tracks: ['ayad'] } } : {}),
+  }
+}
+
+function scoreQSocialFreq(a: Answers): QResult {
+  const map: Record<string, number> = { rarely: 2, monthly: 2, onceTwiceWeek: 1, threePlusWeek: 0, daily: 0 }
+  const earned = map[getStr(a, 'qSocialFreq')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['ayad'],
+    ...(earned < 1 ? { box: { name: 'تجمعات أكل يومية أو شبه يومية', tracks: ['ayad'] } } : {}),
+  }
+}
+
+function scoreQSocialFood(a: Answers): QResult {
+  const sf = getArr(a, 'qSocialFood')
+  let earned = 2
+  let boxName: string | undefined
+  if (sf.includes('sweets') || sf.includes('takeout')) { earned = 0; boxName = 'حلويات ومطاعم في التجمعات' }
+  else if (sf.includes('fried')) { earned = 1 }
+  else earned = 2
+  return {
+    earned, weight: 2, tracks: ['ayad'],
+    ...(earned < 1 && boxName ? { box: { name: boxName, tracks: ['ayad'] } } : {}),
+  }
+}
+
+function scoreQSweetsRelation(a: Answers): QResult {
+  const map: Record<string, number> = { dontLike: 4, sometimes: 3, craveContinuously: 1, soothingCraving: 0 }
+  const earned = map[getStr(a, 'qSweetsRelation')] ?? 0
+  return {
+    earned, weight: 4, tracks: ['ayad'],
+    ...(earned < 2 ? { box: { name: 'شهوة حلويات مستمرة / عاطفية', tracks: ['ayad'] } } : {}),
+  }
+}
+
+function scoreQSweetsAwareness(a: Answers): QResult {
+  // Weight 0 — no contribution to score or tracks
+  void a
+  return { earned: 0, weight: 0, tracks: [] }
+}
+
+function scoreQ18(a: Answers): QResult {
+  const map: Record<string, number> = { '1to2': 3, '3to5': 2, none: 1, '6plus': 0 }
+  const earned = map[getStr(a, 'q18')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['binaa'],
+    ...(earned < 1.5 ? { box: { name: '6 مكملات أو أكثر بدون إشراف', tracks: ['binaa'] } } : {}),
+  }
+}
+
+function scoreQ19(a: Answers): QResult {
   const q19 = getArr(a, 'q19')
   const hasVitD = q19.includes('vitD')
   const hasFolic = q19.includes('folic')
   const hasOmega = q19.includes('omega3')
   const keyCount = [hasVitD, hasFolic, hasOmega].filter(Boolean).length
-  if (keyCount === 3) total += 4
-  else if (keyCount === 2) total += 3
-  else if (keyCount === 1) total += 2
-  else if (q19.includes('none') || q19.length === 0) total += 1
-  else total += 1 // has other supp but not the 3 key ones
-
-  // Q20 (weight 4)
-  const q20 = getArr(a, 'q20')
-  if (q20.includes('none') || q20.length === 0) {
-    total += 4
-  } else {
-    const tier1 = ['vitex','maca','ashwagandha']
-    const tier2 = ['licorice','redClover','kafMaryam']
-    const allHerbs = [...tier1,...tier2,'eveningPrimrose','blackSeed','qustHindi','ginger','turmeric','cinnamon','fenugreek','fennel','chamomile','sage','anise']
-    const herbCount = q20.filter(v => allHerbs.includes(v)).length
-    const hasTier2 = q20.some(v => tier2.includes(v))
-    const hasTier1 = q20.some(v => tier1.includes(v))
-    if (herbCount >= 3) total += 0
-    else if (hasTier2) total += 1
-    else if (hasTier1) total += 2
-    else total += 3
+  let earned = 1
+  if (keyCount === 3) earned = 4
+  else if (keyCount === 2) earned = 3
+  else if (keyCount === 1) earned = 2
+  else if (q19.includes('none') || q19.length === 0) earned = 1
+  else earned = 1
+  return {
+    earned, weight: 4, tracks: ['binaa'],
+    ...(earned < 2 ? { box: { name: 'نقص مكملات خصوبة أساسية', tracks: ['binaa'] } } : {}),
   }
-
-  // Q21 (weight 3)
-  const q21m: Record<string, number> = { doctor: 3, articles: 2, friendFamily: 1, socialMedia: 0, dontknow: 0 }
-  total += q21m[getStr(a,'q21')] ?? 0
-
-  return total // max 14
 }
 
-// ── Section 4: stress & sleep (max 25) ────────────────────────────────────
-function scoreStress(a: Answers): number {
-  let total = 0
+function scoreQ20(a: Answers): QResult {
+  const q20 = getArr(a, 'q20')
+  if (q20.includes('none') || q20.length === 0) {
+    return { earned: 4, weight: 4, tracks: ['binaa'] }
+  }
+  const estrogenHerbs = ['licorice', 'redClover', 'kafMaryam', 'fenugreek', 'fennel', 'anise', 'sage']
+  const noFertilityHerbs = ['vitex', 'maca', 'ashwagandha', 'qustHindi', 'eveningPrimrose', 'turmeric', 'cinnamon']
+  const safeHerbs = ['ginger', 'blackSeed', 'chamomile']
+  const allHerbs = [...estrogenHerbs, ...noFertilityHerbs, ...safeHerbs]
+  const herbCount = q20.filter(v => allHerbs.includes(v)).length
+  const hasEstrogen = q20.some(v => estrogenHerbs.includes(v))
+  const hasNoFertility = q20.some(v => noFertilityHerbs.includes(v))
 
-  // Q22 (weight 5)
-  const q22m: Record<string, number> = { '7to8': 5, over8: 4, '6to7': 3, '5to6': 1, under5: 0 }
-  total += q22m[getStr(a,'q22')] ?? 0
+  if (herbCount >= 3) {
+    return {
+      earned: 0, weight: 4, tracks: ['binaa'],
+      box: { name: '3 أعشاب أو أكثر معاً', tracks: ['binaa'] },
+    }
+  }
+  if (hasEstrogen) {
+    const herbName = q20.find(v => estrogenHerbs.includes(v)) ?? ''
+    const herbLabels: Record<string, string> = {
+      licorice: 'عرق السوس', redClover: 'برسيم أحمر', kafMaryam: 'كف مريم',
+      fenugreek: 'الحلبة', fennel: 'الشبث', anise: 'اليانسون', sage: 'المريمية',
+    }
+    return {
+      earned: 1, weight: 4, tracks: ['binaa'],
+      box: { name: `عشبة شبيهة بالإستروجين (${herbLabels[herbName] ?? herbName})`, tracks: ['muatilat'] },
+    }
+  }
+  if (hasNoFertility) return { earned: 2, weight: 4, tracks: ['binaa'] }
+  return { earned: 3, weight: 4, tracks: ['binaa'] }
+}
 
-  // qSleepTime (weight 5)
-  const stm: Record<string, number> = { before10pm: 5, '10pmTo12': 4, '12to2am': 1, after2am: 0, irregular: 0 }
-  total += stm[getStr(a,'qSleepTime')] ?? 0
+function scoreQ21(a: Answers): QResult {
+  const map: Record<string, number> = { doctor: 3, articles: 2, friendFamily: 1, socialMedia: 0, dontknow: 0 }
+  const earned = map[getStr(a, 'q21')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['binaa'],
+    ...(earned < 1.5 ? { box: { name: 'مصدر مكملات غير موثوق', tracks: ['binaa'] } } : {}),
+  }
+}
 
-  // Q23 (weight 4)
-  const q23m: Record<string, number> = { never: 4, sometimes: 3, usually: 1, always: 0 }
-  total += q23m[getStr(a,'q23')] ?? 0
+function scoreQ22(a: Answers): QResult {
+  const map: Record<string, number> = { '7to8': 5, over8: 4, '6to7': 3, '5to6': 1, under5: 0 }
+  const earned = map[getStr(a, 'q22')] ?? 0
+  return {
+    earned, weight: 5, tracks: ['aman'],
+    ...(earned < 2.5 ? { box: { name: 'نوم قليل (أقل من 6 ساعات)', tracks: ['aman'] } } : {}),
+  }
+}
 
-  // Q24 (weight 5)
-  const q24m: Record<string, number> = { calm: 5, mild: 4, clear: 2, severe: 0 }
-  total += q24m[getStr(a,'q24')] ?? 0
+function scoreQSleepTime(a: Answers): QResult {
+  const map: Record<string, number> = { before10pm: 5, '10pmTo12': 4, '12to2am': 1, after2am: 0, irregular: 0 }
+  const earned = map[getStr(a, 'qSleepTime')] ?? 0
+  return {
+    earned, weight: 5, tracks: ['aman'],
+    ...(earned < 2.5 ? { box: { name: 'نوم متأخر أو غير منتظم', tracks: ['aman'] } } : {}),
+  }
+}
 
-  // Q25 (weight 3, multi)
+function scoreQ23(a: Answers): QResult {
+  const map: Record<string, number> = { never: 4, sometimes: 3, usually: 1, always: 0 }
+  const earned = map[getStr(a, 'q23')] ?? 0
+  return {
+    earned, weight: 4, tracks: ['aman'],
+    ...(earned < 2 ? { box: { name: 'صحيان ليلي متكرر', tracks: ['aman'] } } : {}),
+  }
+}
+
+function scoreQ24(a: Answers): QResult {
+  const map: Record<string, number> = { calm: 5, mild: 4, clear: 2, severe: 0 }
+  const earned = map[getStr(a, 'q24')] ?? 0
+  return {
+    earned, weight: 5, tracks: ['aman'],
+    ...(earned < 2.5 ? { box: { name: 'توتر شديد ومستمر', tracks: ['aman'] } } : {}),
+  }
+}
+
+function scoreQ25(a: Answers): QResult {
   const q25 = getArr(a, 'q25')
   const hasTalk = q25.includes('talk')
   const hasWalk = q25.includes('walk')
-  const hasBad = q25.some(v => ['eat','cry','nothing'].includes(v))
-  if (hasTalk && hasWalk) total += 3
-  else if (hasTalk || hasWalk) total += 2
-  else if (hasBad) total += 0
-  else total += 1 // scroll or sleep
-
-  // Q26 (weight 3)
-  const q26m: Record<string, number> = { no: 3, sometimes: 2, usually: 1, always: 0 }
-  total += q26m[getStr(a,'q26')] ?? 0
-
-  return total // max 25
+  const hasBad = q25.some(v => ['eat', 'cry', 'nothing'].includes(v))
+  let earned = 1
+  let boxName: string | undefined
+  if (hasTalk && hasWalk) earned = 3
+  else if (hasTalk || hasWalk) earned = 2
+  else if (hasBad) { earned = 0; boxName = 'استجابة توتر غير صحية (أكل / كبت)' }
+  else earned = 1
+  return {
+    earned, weight: 3, tracks: ['aman'],
+    ...(earned < 1.5 && boxName ? { box: { name: boxName, tracks: ['aman'] } } : {}),
+  }
 }
 
-// ── Section 5: exercise (max 7) ───────────────────────────────────────────
-function scoreExercise(a: Answers): number {
-  let total = 0
+function scoreQ26(a: Answers): QResult {
+  const map: Record<string, number> = { no: 3, sometimes: 2, usually: 1, always: 0 }
+  const earned = map[getStr(a, 'q26')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['aman'],
+    ...(earned < 1.5 ? { box: { name: 'شاشات حتى لحظة النوم', tracks: ['aman'] } } : {}),
+  }
+}
 
-  // Q27 (weight 4)
-  const q27m: Record<string, number> = { '2to3': 4, '4to5': 3, onceOrLess: 2, '6to7': 1, never: 0 }
-  total += q27m[getStr(a,'q27')] ?? 0
+function scoreQ27(a: Answers): QResult {
+  // q27 is in AMAN for denominator, but "never" box appears in AYAD
+  const map: Record<string, number> = { '2to3': 4, '4to5': 3, onceOrLess: 2, '6to7': 1, never: 0 }
+  const v = getStr(a, 'q27')
+  const earned = map[v] ?? 0
+  let box: { name: string; tracks: TrackKey[] } | undefined
+  if (v === '6to7') box = { name: 'تمرين 6-7 مرات أسبوعياً', tracks: ['aman'] }
+  else if (v === 'never') box = { name: 'لا تمرين', tracks: ['ayad'] }
+  else if (earned < 2) box = { name: 'تمرين نادر', tracks: ['aman'] }
+  return { earned, weight: 4, tracks: ['aman'], ...(box ? { box } : {}) }
+}
 
-  // Q28 (weight 3, multi)
+function scoreQ28(a: Answers): QResult {
   const q28 = getArr(a, 'q28')
-  const gentle = ['walking','yoga','swimming','weights']
-  const moderate = ['running','dance']
+  const gentle = ['walking', 'yoga', 'swimming', 'weights']
+  const moderate = ['running', 'dance']
   const hasGentle = q28.some(v => gentle.includes(v))
   const hasModerate = q28.some(v => moderate.includes(v))
   const hiitOnly = q28.includes('hiit') && !hasGentle && !hasModerate
-  if (q28.includes('none') || q28.length === 0) total += 0
-  else if (hasGentle) total += 3
-  else if (hasModerate) total += 2
-  else if (hiitOnly) total += 1
-  else total += 0
-
-  return total // max 7
+  let earned = 0
+  let boxName: string | undefined
+  if (q28.includes('none') || q28.length === 0) { earned = 0; boxName = 'لا نوع تمرين محدد' }
+  else if (hasGentle) earned = 3
+  else if (hasModerate) earned = 2
+  else if (hiitOnly) { earned = 1; boxName = 'تمرين عالي الكثافة فقط' }
+  return {
+    earned, weight: 3, tracks: ['aman'],
+    ...(earned < 1.5 && boxName ? { box: { name: boxName, tracks: ['aman'] } } : {}),
+  }
 }
 
-// ── Section 6: kitchen (max 19) ───────────────────────────────────────────
-function scoreKitchen(a: Answers): number {
-  let total = 0
+function scoreQ30(a: Answers): QResult {
+  const map: Record<string, number> = { yes: 3, heard: 2, no: 1, neverThought: 0 }
+  const earned = map[getStr(a, 'q30')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['iltihab'],
+    ...(earned < 1.5 ? { box: { name: 'لا تعرف اختيار الزيت', tracks: ['iltihab'] } } : {}),
+  }
+}
 
-  // Q30 (weight 3)
-  const q30m: Record<string, number> = { yes: 3, heard: 2, no: 1, neverThought: 0 }
-  total += q30m[getStr(a,'q30')] ?? 0
-
-  // Q31 (weight 3, multi)
+function scoreQ31(a: Answers): QResult {
   const q31 = getArr(a, 'q31')
-  const safe31 = ['steel','castIron','ceramic']
-  const unsafe31 = ['teflon','aluminum']
-  const hasSafe = q31.some(v => safe31.includes(v))
-  const hasUnsafe = q31.some(v => unsafe31.includes(v))
-  if (q31.includes('dontknow') && !hasSafe && !hasUnsafe) total += 1
-  else if (hasSafe && !hasUnsafe) total += 3
-  else if (hasSafe && hasUnsafe) total += 2
-  else total += 0 // unsafe only
+  const safe = ['steel', 'castIron', 'ceramic']
+  const unsafe = ['teflon', 'aluminum']
+  const hasSafe = q31.some(v => safe.includes(v))
+  const hasUnsafe = q31.some(v => unsafe.includes(v))
+  let earned = 1
+  let boxName: string | undefined
+  if (q31.includes('dontknow') && !hasSafe && !hasUnsafe) earned = 1
+  else if (hasSafe && !hasUnsafe) earned = 3
+  else if (hasSafe && hasUnsafe) earned = 2
+  else { earned = 0; boxName = 'أواني غير آمنة (تيفلون / ألمنيوم)' }
+  return {
+    earned, weight: 3, tracks: ['muatilat'],
+    ...(earned < 1.5 && boxName ? { box: { name: boxName, tracks: ['muatilat'] } } : {}),
+  }
+}
 
-  // Q32 (weight 2)
-  const q32m: Record<string, number> = { noSilicone: 2, someSilicone: 1, mostlySilicone: 0, dontknow: 1 }
-  total += q32m[getStr(a,'q32')] ?? 0
+function scoreQ32(a: Answers): QResult {
+  const map: Record<string, number> = { noSilicone: 2, someSilicone: 1, mostlySilicone: 0, dontknow: 1 }
+  const earned = map[getStr(a, 'q32')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['muatilat'],
+    ...(earned < 1 ? { box: { name: 'أدوات سيليكون في الطبخ', tracks: ['muatilat'] } } : {}),
+  }
+}
 
-  // Q33 (weight 2)
-  const q33m: Record<string, number> = { neither: 2, parchment: 1, both: 1, aluminum: 0 }
-  total += q33m[getStr(a,'q33')] ?? 0
+function scoreQ33(a: Answers): QResult {
+  const map: Record<string, number> = { neither: 2, parchment: 1, both: 1, aluminum: 0 }
+  const earned = map[getStr(a, 'q33')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['muatilat'],
+    ...(earned < 1 ? { box: { name: 'ورق ألمنيوم في الطبخ', tracks: ['muatilat'] } } : {}),
+  }
+}
 
-  // Q34 (weight 3)
-  const q34m: Record<string, number> = { filtered: 3, gallon: 2, tap: 1, smallPlastic: 0 }
-  total += q34m[getStr(a,'q34')] ?? 0
+function scoreQ34(a: Answers): QResult {
+  const map: Record<string, number> = { filtered: 3, gallon: 2, tap: 1, smallPlastic: 0 }
+  const earned = map[getStr(a, 'q34')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['muatilat'],
+    ...(earned < 1.5 ? { box: { name: 'مياه زجاجات بلاستيك صغيرة', tracks: ['muatilat'] } } : {}),
+  }
+}
 
-  // Q35 (weight 3, multi)
+function scoreQ35(a: Answers): QResult {
   const q35 = getArr(a, 'q35')
   const hasGlass = q35.includes('glass')
-  const hasUnsafe35 = q35.some(v => ['plastic','wrap'].includes(v))
-  if (hasGlass && !hasUnsafe35) total += 3
-  else if (hasGlass && hasUnsafe35) total += 2
-  else if (q35.includes('eatFresh')) total += 2
-  else total += 0
-
-  // Q51 (weight 3, multi)
-  const q51 = getArr(a, 'q51')
-  const healthyCook = ['grill','steam','boil','airFryer']
-  const unhealthyCook = ['deepFry','fryOil']
-  const hasHealthyCook = q51.some(v => healthyCook.includes(v))
-  const hasUnhealthyCook = q51.some(v => unhealthyCook.includes(v))
-  if (hasHealthyCook && !hasUnhealthyCook) total += 3
-  else if (hasHealthyCook && hasUnhealthyCook) total += 2
-  else total += 0
-
-  return total // max 19
+  const hasUnsafe = q35.some(v => ['plastic', 'wrap'].includes(v))
+  let earned = 0
+  let boxName: string | undefined
+  if (hasGlass && !hasUnsafe) earned = 3
+  else if (hasGlass && hasUnsafe) earned = 2
+  else if (q35.includes('eatFresh')) earned = 2
+  else { earned = 0; boxName = 'حفظ أكل في أوعية بلاستيكية' }
+  return {
+    earned, weight: 3, tracks: ['muatilat'],
+    ...(earned < 1.5 && boxName ? { box: { name: boxName, tracks: ['muatilat'] } } : {}),
+  }
 }
 
-// ── Section 7: personalCare (max 13) ──────────────────────────────────────
-function scorePersonalCare(a: Answers): number {
-  let total = 0
-  const readMap: Record<string, number> = { always: 2, sometimes: 1, rarely: 1, never: 0 }
-  total += readMap[getStr(a,'q36')] ?? 0
-  total += readMap[getStr(a,'q37')] ?? 0
-  const q38m: Record<string, number> = { rarely: 2, sometimes: 2, mostDays: 1, everyday: 0 }
-  total += q38m[getStr(a,'q38')] ?? 0
-  // Q39 (weight 3, multi — best option)
+function scoreQ36(a: Answers): QResult {
+  const map: Record<string, number> = { always: 2, sometimes: 1, rarely: 1, never: 0 }
+  const earned = map[getStr(a, 'q36')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['muatilat'],
+    ...(earned < 1 ? { box: { name: 'لا تقرأ مكونات منتجات الجسم', tracks: ['muatilat'] } } : {}),
+  }
+}
+
+function scoreQ37(a: Answers): QResult {
+  const map: Record<string, number> = { always: 2, sometimes: 1, rarely: 1, never: 0 }
+  const earned = map[getStr(a, 'q37')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['muatilat'],
+    ...(earned < 1 ? { box: { name: 'لا تقرأ مكونات العطور', tracks: ['muatilat'] } } : {}),
+  }
+}
+
+function scoreQ38(a: Answers): QResult {
+  const map: Record<string, number> = { rarely: 2, sometimes: 2, mostDays: 1, everyday: 0 }
+  const earned = map[getStr(a, 'q38')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['muatilat'],
+    ...(earned < 1 ? { box: { name: 'ديودورانت يومي (ألمنيوم)', tracks: ['muatilat'] } } : {}),
+  }
+}
+
+function scoreQ39(a: Answers): QResult {
   const q39 = getArr(a, 'q39')
-  if (q39.includes('cup') || q39.includes('cloth')) total += 3
-  else if (q39.includes('regularUnscented')) total += 2
-  else if (q39.includes('tampon')) total += 1
-  else if (q39.includes('scented')) total += 0
-  else total += 1
-  const q40m: Record<string, number> = { yes: 2, heardIssues: 1, never: 0 }
-  total += q40m[getStr(a,'q40')] ?? 0
-  const q41m: Record<string, number> = { cotton: 2, mixed: 1, synthetic: 0, noAttention: 1 }
-  total += q41m[getStr(a,'q41')] ?? 0
-  return total // max 13
+  let earned = 1
+  let boxName: string | undefined
+  if (q39.includes('cup') || q39.includes('cloth')) earned = 3
+  else if (q39.includes('regularUnscented')) earned = 2
+  else if (q39.includes('tampon')) earned = 1
+  else if (q39.includes('scented')) { earned = 0; boxName = 'فوط معطرة' }
+  else earned = 1
+  return {
+    earned, weight: 3, tracks: ['muatilat'],
+    ...(earned < 1.5 && boxName ? { box: { name: boxName, tracks: ['muatilat'] } } : {}),
+  }
 }
 
-// ── Section 8: menstrual (max 22) ─────────────────────────────────────────
-function scoreMenstrual(a: Answers): number {
-  let total = 0
-  const q42m: Record<string, number> = { '21to35': 5, under21: 2, over35: 1, irregular: 0 }
-  total += q42m[getStr(a,'q42')] ?? 0
-  const q43m: Record<string, number> = { normal: 4, veryLight: 2, heavy: 2, veryHeavy: 0 }
-  total += q43m[getStr(a,'q43')] ?? 0
-  const q44m: Record<string, number> = { noneOrMild: 4, moderate: 3, severe: 1, verySevere: 0 }
-  total += q44m[getStr(a,'q44')] ?? 0
-  const q45m: Record<string, number> = { never: 3, sometimesSmall: 2, regularlyLarge: 0 }
-  total += q45m[getStr(a,'q45')] ?? 0
-  const q46m: Record<string, number> = { never: 3, sometimes: 1, regularly: 0 }
-  total += q46m[getStr(a,'q46')] ?? 0
-  // Q47 (weight 3, multi)
+function scoreQ40(a: Answers): QResult {
+  const map: Record<string, number> = { yes: 2, heardIssues: 1, never: 0 }
+  const earned = map[getStr(a, 'q40')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['muatilat'],
+    ...(earned < 1 ? { box: { name: 'لا تعرف مكونات الفوط', tracks: ['muatilat'] } } : {}),
+  }
+}
+
+function scoreQ41(a: Answers): QResult {
+  const map: Record<string, number> = { cotton: 2, mixed: 1, synthetic: 0, noAttention: 1 }
+  const earned = map[getStr(a, 'q41')] ?? 0
+  return {
+    earned, weight: 2, tracks: ['muatilat'],
+    ...(earned < 1 ? { box: { name: 'ملابس صناعية (بوليستر / نايلون)', tracks: ['muatilat'] } } : {}),
+  }
+}
+
+function scoreQ42(a: Answers): QResult {
+  const map: Record<string, number> = { '21to35': 5, under21: 2, over35: 1, irregular: 0 }
+  return { earned: map[getStr(a, 'q42')] ?? 0, weight: 5, tracks: [] }
+}
+
+function scoreQ43(a: Answers): QResult {
+  const map: Record<string, number> = { normal: 4, veryLight: 2, heavy: 2, veryHeavy: 0 }
+  return { earned: map[getStr(a, 'q43')] ?? 0, weight: 4, tracks: [] }
+}
+
+function scoreQ44(a: Answers): QResult {
+  const map: Record<string, number> = { noneOrMild: 4, moderate: 3, severe: 1, verySevere: 0 }
+  return { earned: map[getStr(a, 'q44')] ?? 0, weight: 4, tracks: [] }
+}
+
+function scoreQ45(a: Answers): QResult {
+  const map: Record<string, number> = { never: 3, sometimesSmall: 2, regularlyLarge: 0 }
+  return { earned: map[getStr(a, 'q45')] ?? 0, weight: 3, tracks: [] }
+}
+
+function scoreQ46(a: Answers): QResult {
+  const map: Record<string, number> = { never: 3, sometimes: 1, regularly: 0 }
+  return { earned: map[getStr(a, 'q46')] ?? 0, weight: 3, tracks: [] }
+}
+
+function scoreQ47(a: Answers): QResult {
   const q47 = getArr(a, 'q47')
   const symptoms = q47.filter(v => v !== 'none')
-  if (q47.includes('none') || symptoms.length === 0) total += 3
-  else if (symptoms.length <= 2) total += 2
-  else total += 0
-  return total // max 22
+  let earned = 3
+  if (symptoms.length === 0 || q47.includes('none')) earned = 3
+  else if (symptoms.length <= 2) earned = 2
+  else earned = 0
+  return { earned, weight: 3, tracks: [] }
 }
 
-// ── Section 9: caffeine (max 9) ───────────────────────────────────────────
-function scoreCaffeine(a: Answers): number {
-  let total = 0
-  const q48m: Record<string, number> = { none: 3, one: 3, two: 2, threePlus: 0 }
-  total += q48m[getStr(a,'q48')] ?? 0
-  const q49m: Record<string, number> = { never: 3, sometimes: 1, regularly: 0 }
-  total += q49m[getStr(a,'q49')] ?? 0
-  const q50m: Record<string, number> = { over2: 3, '1p5to2': 2, '1to1p5': 1, underOne: 0 }
-  total += q50m[getStr(a,'q50')] ?? 0
-  return total // max 9
+function scoreQSmoking(a: Answers): QResult {
+  const q = getArr(a, 'qSmoking')
+  if (q.includes('noSmoke') || q.length === 0) {
+    return { earned: 5, weight: 5, tracks: ['muatilat', 'iltihab'] }
+  }
+  let earned = 5
+  let boxName: string | undefined
+  if (q.includes('cigarettes')) { earned = 0; boxName = 'تدخين سجائر' }
+  else if (q.includes('vape')) { earned = 0; boxName = 'فيب / سجائر إلكترونية' }
+  else if (q.includes('hookahRegular')) { earned = 0; boxName = 'شيشة بانتظام' }
+  else if (q.includes('hookahOccasional')) { earned = 1; boxName = 'شيشة أحياناً' }
+  else if (q.includes('passive')) { earned = 2; boxName = 'تدخين سلبي يومي' }
+  return {
+    earned, weight: 5, tracks: ['muatilat', 'iltihab'],
+    ...(earned < 2.5 && boxName ? { box: { name: boxName, tracks: ['muatilat', 'iltihab'] } } : {}),
+  }
 }
 
-// ── Section 10: infoSources (max 3) ───────────────────────────────────────
-function scoreInfoSources(a: Answers): number {
+function scoreQ48(a: Answers): QResult {
+  const map: Record<string, number> = { none: 3, one: 3, two: 2, threePlus: 0 }
+  const earned = map[getStr(a, 'q48')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['aman'],
+    ...(earned < 1.5 ? { box: { name: 'كافيين عالي (3+ أكواب يومياً)', tracks: ['aman'] } } : {}),
+  }
+}
+
+function scoreQ49(a: Answers): QResult {
+  const map: Record<string, number> = { never: 3, sometimes: 1, regularly: 0 }
+  const earned = map[getStr(a, 'q49')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['aman'],
+    ...(earned < 1.5 ? { box: { name: 'مشروبات طاقة منتظمة', tracks: ['aman'] } } : {}),
+  }
+}
+
+function scoreQ50(a: Answers): QResult {
+  const map: Record<string, number> = { over2: 3, '1p5to2': 2, '1to1p5': 1, underOne: 0 }
+  const earned = map[getStr(a, 'q50')] ?? 0
+  return {
+    earned, weight: 3, tracks: ['binaa'],
+    ...(earned < 1.5 ? { box: { name: 'قلة شرب الماء', tracks: ['binaa'] } } : {}),
+  }
+}
+
+function scoreQ51(a: Answers): QResult {
+  const q51 = getArr(a, 'q51')
+  const healthy = ['grill', 'steam', 'boil', 'airFryer']
+  const unhealthy = ['deepFry', 'fryOil']
+  const hasHealthy = q51.some(v => healthy.includes(v))
+  const hasUnhealthy = q51.some(v => unhealthy.includes(v))
+  let earned = 0
+  let boxName: string | undefined
+  if (hasHealthy && !hasUnhealthy) earned = 3
+  else if (hasHealthy && hasUnhealthy) earned = 2
+  else { earned = 0; boxName = 'قلي كطريقة طبخ أساسية' }
+  return {
+    earned, weight: 3, tracks: ['iltihab'],
+    ...(earned < 1.5 && boxName ? { box: { name: boxName, tracks: ['iltihab'] } } : {}),
+  }
+}
+
+function scoreQ52(a: Answers): QResult {
   const q52 = getArr(a, 'q52')
-  const trusted = ['doctor','trustedSites']
-  const bad = ['social','whatsapp','friends','noResearch']
+  const trusted = ['doctor', 'trustedSites']
+  const bad = ['social', 'whatsapp', 'friends', 'noResearch']
   const hasTrusted = q52.some(v => trusted.includes(v))
   const hasBad = q52.some(v => bad.includes(v))
-  if (hasTrusted && !hasBad) return 3
-  if (hasTrusted && hasBad) return 2
-  return 0
+  let earned = 0
+  if (hasTrusted && !hasBad) earned = 3
+  else if (hasTrusted && hasBad) earned = 2
+  else earned = 0
+  return { earned, weight: 3, tracks: [] }
 }
 
-// ── Section 11: thyroid (max 5) ───────────────────────────────────────────
-function scoreThyroid(a: Answers): number {
+function scoreQ53(a: Answers): QResult {
   const q53 = getArr(a, 'q53')
   const symptoms = q53.filter(v => v !== 'none')
-  if (q53.includes('none') || symptoms.length === 0) return 5
-  if (symptoms.length <= 2) return 3
-  return 0
+  let earned = 5
+  if (q53.includes('none') || symptoms.length === 0) earned = 5
+  else if (symptoms.length <= 2) earned = 3
+  else earned = 0
+  return { earned, weight: 5, tracks: [] }
 }
 
-// ── Section 12: maleFactor (max 10) ───────────────────────────────────────
-function scoreMaleFactor(a: Answers): number {
-  let total = 0
-  const q54m: Record<string, number> = { yesNormal: 4, yesIssues: 2, notDone: 1, refused: 0 }
-  total += q54m[getStr(a,'q54')] ?? 0
-  const q55m: Record<string, number> = { knowApply: 2, heardNoApply: 1, dontknow: 0 }
-  total += q55m[getStr(a,'q55')] ?? 0
-  const q56m: Record<string, number> = { yesDoctor: 2, yesSelf: 1, none: 1, neverThought: 0 }
-  total += q56m[getStr(a,'q56')] ?? 0
-  const q57m: Record<string, number> = { healthy: 2, acceptable: 1, unhealthy: 0, dontknow: 1 }
-  total += q57m[getStr(a,'q57')] ?? 0
-  return total // max 10
+function scoreQ54(a: Answers): QResult {
+  const map: Record<string, number> = { yesNormal: 4, yesIssues: 2, notDone: 1, refused: 0 }
+  return { earned: map[getStr(a, 'q54')] ?? 0, weight: 4, tracks: [] }
 }
 
-// ── Triggered sentences ────────────────────────────────────────────────────
+function scoreQ55(a: Answers): QResult {
+  const map: Record<string, number> = { knowApply: 2, heardNoApply: 1, dontknow: 0 }
+  return { earned: map[getStr(a, 'q55')] ?? 0, weight: 2, tracks: [] }
+}
+
+function scoreQ56(a: Answers): QResult {
+  const map: Record<string, number> = { yesDoctor: 2, yesSelf: 1, none: 1, neverThought: 0 }
+  return { earned: map[getStr(a, 'q56')] ?? 0, weight: 2, tracks: [] }
+}
+
+function scoreQ57(a: Answers): QResult {
+  const map: Record<string, number> = { healthy: 2, acceptable: 1, unhealthy: 0, dontknow: 1 }
+  return { earned: map[getStr(a, 'q57')] ?? 0, weight: 2, tracks: [] }
+}
+
+// ── Medical box items ──────────────────────────────────────────────────────
+function getMedicalBoxItems(a: Answers): string[] {
+  const items: string[] = []
+  const q42 = getStr(a, 'q42')
+  if (q42 === 'under21') items.push('دورة شهرية قصيرة (أقل من 21 يوماً)')
+  if (q42 === 'over35') items.push('دورة شهرية طويلة (أكثر من 35 يوماً)')
+  if (q42 === 'irregular') items.push('دورة شهرية غير منتظمة')
+  const q43 = getStr(a, 'q43')
+  if (q43 === 'veryLight') items.push('نزيف خفيف جداً')
+  if (q43 === 'veryHeavy') items.push('نزيف غزير جداً')
+  const q44 = getStr(a, 'q44')
+  if (q44 === 'severe') items.push('ألم شديد في الدورة')
+  if (q44 === 'verySevere') items.push('ألم يمنع الحركة — يستدعي تقييماً')
+  if (getStr(a, 'q45') === 'regularlyLarge') items.push('تجلطات كبيرة ومنتظمة')
+  if (getStr(a, 'q46') === 'regularly') items.push('نزيف بين الدورتين')
+  const q47symptoms = getArr(a, 'q47').filter(v => v !== 'none')
+  const symptomLabels: Record<string, string> = {
+    bloating: 'انتفاخ شديد قبل الدورة', moodSwings: 'تقلبات مزاجية حادة',
+    sugarCravings: 'شهوة سكر قبل الدورة', headache: 'صداع متكرر', breastPain: 'ألم الثدي',
+  }
+  if (q47symptoms.length >= 3) items.push(`أعراض PMS متعددة: ${q47symptoms.slice(0, 3).map(s => symptomLabels[s] ?? s).join('، ')}`)
+  const thyroidSymptoms = getArr(a, 'q53').filter(v => v !== 'none')
+  const thyroidLabels: Record<string, string> = {
+    hairLoss: 'تساقط شعر', fatigue: 'إرهاق شديد', coldHands: 'برود في الأطراف',
+    constipation: 'إمساك مزمن', fogBrain: 'ضباب ذهني', weightGain: 'زيادة وزن بدون سبب',
+  }
+  if (thyroidSymptoms.length >= 3) items.push(`أعراض الغدة الدرقية: ${thyroidSymptoms.slice(0, 3).map(s => thyroidLabels[s] ?? s).join('، ')}`)
+  else if (thyroidSymptoms.length > 0) items.push(`أعراض محتملة للغدة الدرقية: ${thyroidSymptoms.map(s => thyroidLabels[s] ?? s).join('، ')}`)
+  return items
+}
+
+// ── Male factor variant ────────────────────────────────────────────────────
+function getMaleFactorVariant(a: Answers): 'a' | 'b' | 'c' | null {
+  const marital = getStr(a, 'qMaritalStatus')
+  if (marital !== 'married') return null
+  const q54 = getStr(a, 'q54')
+  const q57 = getStr(a, 'q57')
+  if (q54 === 'refused') return 'c'
+  if (q54 === 'yesIssues' || q57 === 'unhealthy') return 'b'
+  if (q54 === 'notDone') return 'a'
+  return 'a' // yesNormal with no issues
+}
+
+// ── Age category ──────────────────────────────────────────────────────────
+function getAgeCategory(a: Answers): 'a' | 'b' | 'c' | 'd' {
+  const q1 = getStr(a, 'q1')
+  if (['under25', '25to30'].includes(q1)) return 'a'
+  if (q1 === '31to35') return 'b'
+  if (q1 === '36to40') return 'c'
+  return 'd' // 41to45 or over45
+}
+
+// ── Table intro text ───────────────────────────────────────────────────────
+function buildTableIntroText(topTrack: TrackKey | null, secondTrack: TrackKey | null, intersectionPoint: string): string {
+  if (!topTrack) return 'صورتكِ متوازنة عبر المسارات الخمسة.'
+  const topInfo = TRACK_INFO[topTrack]
+  const secondInfo = secondTrack ? TRACK_INFO[secondTrack] : null
+  const introByTrack: Record<TrackKey, string> = {
+    aman: `مسار الأمان هو الأعلى تأثيراً لديكِ — وهو يؤثر على الخصوبة عبر ${topInfo.howItEnters}. حين يتلقى جسمكِ إشارات إجهاد متكررة، الدماغ يؤجل قرار التبويض لأن الأولوية تكون للبقاء.`,
+    ayad: `مسار الأيض هو الأعلى تأثيراً لديكِ — وهو يؤثر على الخصوبة عبر ${topInfo.howItEnters}. ما تأكلينه يُترجم مباشرةً إلى إشارات يرسلها الإنسولين للمبيض، وهذه الإشارات تُحدد متى وكيف يحدث التبويض.`,
+    muatilat: `مسار المعطلات الهرمونية هو الأعلى تأثيراً لديكِ — وهو يؤثر على الخصوبة عبر ${topInfo.howItEnters}. التعرض للمواد الكيميائية من الطعام والمنتجات يشوش الإشارات الهرمونية بين الدماغ والمبيض.`,
+    iltihab: `مسار الالتهاب هو الأعلى تأثيراً لديكِ — وهو يؤثر على الخصوبة عبر ${topInfo.howItEnters}. الالتهاب المزمن يضر بجودة البويضة وبيئة الرحم قبل أن تحسي به مباشرةً.`,
+    binaa: `مسار البناء هو الأعلى تأثيراً لديكِ — وهو يؤثر على الخصوبة عبر ${topInfo.howItEnters}. الجسم يحتاج المواد الخام الصحيحة لبناء الهرمونات، وغيابها يقلل كفاءة المبيض تدريجياً.`,
+  }
+  let text = introByTrack[topTrack]
+  if (secondInfo) {
+    text += ` التقاطع مع مسار ${secondInfo.label} يجعل ${intersectionPoint} المحور الأكثر تأثراً لديكِ الآن.`
+  }
+  return text
+}
+
+// ── Staff triggered sentences ──────────────────────────────────────────────
 function getTriggeredSentences(a: Answers, bmi: number): string[] {
   const triggered: string[] = []
   const str = (id: string) => getStr(a, id)
   const arr = (id: string) => getArr(a, id)
 
-  // BMI — always first for everyone
   if (bmi > 0) {
-    if (bmi < 18.5) {
-      triggered.push(`مؤشر كتلة الجسم (BMI) عندكِ: ${bmi} — هذا يضعكِ في فئة نقص الوزن (أقل من 18.5). انخفاض الوزن عن المعدل الطبيعي يرسل إشارة للدماغ بأن الجسم ليس في وضع آمن للحمل، فيبدأ بتقليص إنتاج هرمونات التبويض.`)
-    } else if (bmi <= 24.9) {
-      triggered.push(`مؤشر كتلة الجسم (BMI) عندكِ: ${bmi} — أنتِ في فئة الوزن الطبيعي (18.5–24.9) ✅ وهذا داعم لصحتكِ الهرمونية. لكن تذكري أن الوزن الطبيعي وحده لا يعني غياب كل العوامل المؤثرة على الخصوبة — بقية النقاط في هذا التقرير تُكمل الصورة.`)
-    } else if (bmi <= 29.9) {
-      triggered.push(`مؤشر كتلة الجسم (BMI) عندكِ: ${bmi} — هذا يضعكِ في فئة الوزن الزائد (25–29.9). الوزن الزائد يؤثر مباشرةً على مستوى الإستروجين في جسمكِ، لأن الخلايا الدهنية تنتج إستروجيناً إضافياً يخل بالتوازن الهرموني ويعطل إشارات التبويض.`)
-    } else if (bmi <= 34.9) {
-      triggered.push(`مؤشر كتلة الجسم (BMI) عندكِ: ${bmi} — هذا يضعكِ في فئة السمنة (30–34.9). السمنة تؤثر بشكل حاد على التوازن الهرموني — الخلايا الدهنية الزائدة تنتج إستروجيناً مرتفعاً يعطل إشارات التبويض ويصعّب الحمل بشكل مباشر.`)
-    } else {
-      triggered.push(`مؤشر كتلة الجسم (BMI) عندكِ: ${bmi} — هذا يضعكِ في فئة السمنة المفرطة (أكثر من 35). تحسين الوزن هو الخطوة الأكثر أثراً على خصوبتكِ الآن — الجسم بحاجة لبيئة هرمونية مستقرة وهذا يبدأ من الوصول لوزن أقرب للمعدل الطبيعي.`)
-    }
+    if (bmi < 18.5) triggered.push(`BMI: ${bmi} — نقص وزن. انخفاض الوزن يُرسل إشارة للدماغ بأن الجسم ليس في وضع آمن للحمل، فيقلص إنتاج هرمونات التبويض.`)
+    else if (bmi <= 24.9) triggered.push(`BMI: ${bmi} — وزن طبيعي ✅. الوزن الطبيعي وحده لا يعني غياب كل العوامل المؤثرة على الخصوبة.`)
+    else if (bmi <= 29.9) triggered.push(`BMI: ${bmi} — وزن زائد. يؤثر مباشرةً على مستوى الإستروجين لأن الخلايا الدهنية تنتج إستروجيناً يخل بالتوازن الهرموني.`)
+    else triggered.push(`BMI: ${bmi} — سمنة. تؤثر بشكل حاد على التوازن الهرموني — الإستروجين المرتفع يعطل إشارات التبويض.`)
   }
 
-  // Diet
   const q4 = arr('q4').filter(v => v !== 'none')
-  if (q4.length >= 3) triggered.push(`ذكرتِ أنكِ جربتِ ${q4.length} أنظمة غذائية مختلفة — تنقلكِ بين هذه الأنظمة أرهق جسمكِ هرمونياً. كل نظام جديد يعيد ضبط الإنسولين والليبتين من الصفر، وهذا التذبذب المتكرر يضرب استقرار محور الدماغ والمبيض.`)
-  if (str('q5') === 'always') triggered.push(`ذكرتِ أنكِ تتجنبين النشويات (الكربوهيدرات) دائماً — تقليل النشويات (الكربوهيدرات) بشكل حاد يخفض هرمون اللبتين الذي يخبر الدماغ بأن الجسم جاهز للإنجاب. غيابه يوقف إشارات التبويض.`)
-  if (str('q6') === 'avoid') triggered.push(`ذكرتِ أنكِ تتجنبين الحليب ومنتجاته كلياً — الحذف الكامل للألبان بدون بديل غذائي مدروس يؤدي لنقص في الكالسيوم وفيتامين D، وكلاهما ضروريان لجودة البويضة وانتظام الدورة.`)
-  if (str('q9') === 'neverRead') triggered.push(`ذكرتِ أنكِ لا تقرئين مكونات الطعام أبداً — النكهات المضافة والمواد الحافظة في الأطعمة المصنعة تعمل كمعطلات هرمونية داخل جسمكِ. وبدون قراءة المكونات، لا تعرفين كم تتعرضين لها يومياً.`)
-  if (str('q10') === 'none') triggered.push(`ذكرتِ أنكِ لا تأكلين خضاراً تقريباً — الخضار هي المصدر الرئيسي للألياف التي تساعد الكبد على التخلص من الإستروجين الزائد. غيابها يعني تراكم الهرمونات في جسمكِ.`)
-  if (str('q11') === 'none') triggered.push(`ذكرتِ أنكِ لا تأكلين فاكهة تقريباً — الفاكهة تحتوي على مضادات أكسدة ضرورية لحماية البويضة من الإجهاد التأكسدي. وغيابها يترك البويضة أكثر عرضة للتلف.`)
-  if (['dontknow','neverThought'].includes(str('q12'))) triggered.push(`ذكرتِ أنكِ لا تعرفين كمية البروتين اليومية التي تحتاجينها — البروتين هو اللبنة الأساسية لبناء الهرمونات. بدون كمية كافية يومياً، جسمكِ يفتقر للمواد الخام التي يحتاجها لصنع هرمونات الخصوبة.`)
+  if (q4.length >= 3) triggered.push(`جربت ${q4.length} أنظمة غذائية — التنقل بينها يرهق جسمكِ هرمونياً ويضرب استقرار محور الدماغ والمبيض.`)
+  if (str('q5') === 'always') triggered.push(`تتجنب النشويات دائماً — يخفض هرمون اللبتين الذي يخبر الدماغ بأن الجسم جاهز للإنجاب.`)
+  if (str('q6') === 'avoid') triggered.push(`تتجنب الحليب كلياً — يؤدي لنقص في الكالسيوم وفيتامين D، وكلاهما ضروريان لجودة البويضة.`)
+  if (str('q9') === 'neverRead') triggered.push(`لا تقرأ مكونات الطعام — النكهات المضافة والمواد الحافظة تعمل كمعطلات هرمونية.`)
+  if (str('q10') === 'none') triggered.push(`لا تأكل خضاراً تقريباً — الخضار مصدر الألياف التي تساعد الكبد على التخلص من الإستروجين الزائد.`)
+  if (str('q11') === 'none') triggered.push(`لا تأكل فاكهة تقريباً — تحتوي على مضادات أكسدة ضرورية لحماية البويضة.`)
+  if (['dontknow', 'neverThought'].includes(str('q12'))) triggered.push(`لا تعرف احتياجها من البروتين — البروتين اللبنة الأساسية لبناء الهرمونات.`)
   const q15 = arr('q15')
-  if (q15.includes('crash') || q15.includes('longFast')) triggered.push(`ذكرتِ أنكِ جربتِ حمية قاسية أو صياماً طويلاً — الحمية القاسية ترفع الكورتيزول بشكل حاد. والكورتيزول المرتفع يأمر الجسم بتأجيل التبويض لأن الدماغ يعتبر الجوع خطراً.`)
+  if (q15.includes('crash') || q15.includes('longFast')) triggered.push(`كراش دايت / صيام طويل — يرفع الكورتيزول الذي يأمر الجسم بتأجيل التبويض.`)
   const q16 = arr('q16')
-  if (!q16.includes('none') && q16.length > 0) triggered.push(`ذكرتِ أنكِ استخدمتِ حقن أو أدوية إنقاص الوزن — هذه الحقن تؤثر على هرمون GLP-1 الذي يرتبط بمحور الإنسولين والتبويض. التوقف عنها بدون خطة غذائية داعمة يخلق تذبذباً هرمونياً.`)
+  if (!q16.includes('none') && q16.length > 0) triggered.push(`استخدمت حقن / أدوية إنقاص الوزن — تؤثر على هرمون GLP-1 المرتبط بمحور الإنسولين والتبويض.`)
   const q17 = arr('q17')
-  if (q17.includes('aspartame') || q17.includes('sucralose')) {
-    const names = [q17.includes('aspartame') ? 'أسبارتام (دايت كولا)' : '', q17.includes('sucralose') ? 'سكرالوز (سبليندا)' : ''].filter(Boolean).join(' و')
-    triggered.push(`ذكرتِ أنكِ تستخدمين ${names} — المحليات الصناعية تؤثر على بكتيريا الأمعاء التي تلعب دوراً في تنظيم الإستروجين. اضطراب الميكروبيوم يعني اضطراباً في إعادة تدوير الهرمونات.`)
-  }
-  if (['fivePlus','everyday'].includes(str('qRestaurant'))) triggered.push(`ذكرتِ أنكِ تأكلين من المطاعم والأكل الجاهز 5 مرات أو أكثر بالأسبوع — هذه الكثافة تعني تعرضاً يومياً للدهون المتحولة والصوديوم المرتفع والمواد الحافظة، وكلها تغذي الالتهاب الذي يعطل الخصوبة.`)
-  if (str('qSnacksFreq') === 'insteadOfMeals') triggered.push(`ذكرتِ أنكِ تعتمدين على السناكات بدل الوجبات الكاملة — هذا يخلق تذبذباً مستمراً في سكر الدم يرهق البنكرياس ويضرب حساسية الإنسولين يومياً.`)
-  const st = arr('qSnackType').filter(v => v !== 'noSnacks')
-  const unhealthy = ['chips','chocolate','biscuit']
-  if (st.length > 0 && st.every(v => unhealthy.includes(v))) triggered.push(`ذكرتِ أن سناكاتكِ في الغالب شيبس وشوكولاتة وبسكويت — هذه السناكات المصنعة ترفع السكر في الدم بسرعة ثم تهبط بسرعة. هذه الدورة المتكررة تجهد الإنسولين وتؤثر مباشرةً على انتظام التبويض.`)
-  if (str('qBreakfast') === 'never') triggered.push(`ذكرتِ أنكِ لا تأكلين فطوراً أبداً — تخطي الفطور يرفع الكورتيزول في الصباح ويزيد مقاومة الإنسولين خلال اليوم، وكلاهما يؤثر على جودة التبويض.`)
-  if (['whatever','snacksOnly'].includes(str('qWorkMeal'))) triggered.push(`ذكرتِ أن وجباتكِ خلال العمل غير منظمة — الأكل العشوائي بدون تخطيط يعني أن جسمكِ لا يحصل على العناصر الغذائية التي تحتاجها هرموناتكِ بشكل منتظم.`)
-  if (['threePlusWeek','daily'].includes(str('qSocialFreq'))) triggered.push(`ذكرتِ أنكِ تحضرين تجمعات مع أكل 3 مرات أو أكثر بالأسبوع — التجمعات المتكررة مع أكل غير متحكم فيه تجعل من الصعب بناء نمط غذائي مستقر. والهرمونات تحتاج استقراراً وليس تذبذباً.`)
-  const sf2 = arr('qSocialFood')
-  if (sf2.includes('fried') || sf2.includes('sweets')) triggered.push(`ذكرتِ أن أكل التجمعات يحتوي على حلويات ومقليات — هذا يعني جرعات مرتفعة من السكر والدهون المشبعة، وتأثيرها على الإنسولين يمتد لأيام بعد الوجبة.`)
-  if (str('qSweetsRelation') === 'craveContinuously') triggered.push(`ذكرتِ أنكِ تشتهين الحلويات بشكل مستمر حتى بعد الأكل — هذه الرغبة ليست ضعف إرادة. هي إشارة جسمكِ أن هناك خللاً في الإنسولين أو انخفاضاً في السيروتونين يحتاج معالجة حقيقية.`)
-  if (str('qSweetsRelation') === 'soothingCraving') triggered.push(`ذكرتِ أنكِ تأكلين الحلويات للتهدئة عند التوتر — هذا يكشف ارتباطاً بين محور التوتر والسكر في جسمكِ. الكورتيزول المرتفع يطلب السكر، والسكر يرفع الإنسولين، والإنسولين يضرب التبويض.`)
-
-  // Supplements
-  if (str('q18') === '6plus') triggered.push(`ذكرتِ أنكِ تأخذين 6 مكملات أو أكثر يومياً — أخذ عدد كبير من المكملات بدون توجيه متخصص قد يسبب تعارضاً في الامتصاص. بعض المكملات تمنع امتصاص بعضها الآخر وتصبح عبئاً بدل فائدة.`)
+  if (q17.includes('aspartame') || q17.includes('sucralose')) triggered.push(`محليات صناعية — تؤثر على بكتيريا الأمعاء التي تنظم الإستروجين.`)
+  if (['fivePlus', 'everyday'].includes(str('qRestaurant'))) triggered.push(`مطاعم 5+ مرات بالأسبوع — تعرض يومي للدهون المتحولة والمواد الحافظة تغذي الالتهاب.`)
+  if (str('qSnacksFreq') === 'insteadOfMeals') triggered.push(`سناكات بدل وجبات — يخلق تذبذباً مستمراً في سكر الدم يرهق الإنسولين.`)
+  if (str('qBreakfast') === 'never') triggered.push(`لا تأكل فطوراً أبداً — يرفع الكورتيزول صباحاً ويزيد مقاومة الإنسولين.`)
+  if (str('qSweetsRelation') === 'soothingCraving') triggered.push(`تأكل الحلويات للتهدئة — كورتيزول مرتفع يطلب سكراً، والسكر يرفع الإنسولين، والإنسولين يضرب التبويض.`)
+  if (str('q18') === '6plus') triggered.push(`6 مكملات أو أكثر يومياً — قد يسبب تعارضاً في الامتصاص.`)
   const q19 = arr('q19')
-  if (!q19.includes('vitD') && !q19.includes('folic')) triggered.push(`ذكرتِ أنكِ لا تأخذين فيتامين D ولا حمض الفوليك — هذان العنصران هما الأساس العلمي لدعم الخصوبة. غيابهما يعني أن جسمكِ يفتقر للبنية التحتية الهرمونية الأساسية.`)
-  const q20 = arr('q20')
-  const herbLabels: Record<string, string> = { licorice: 'عرق السوس', redClover: 'البرسيم الأحمر', kafMaryam: 'كف مريم' }
-  const triggeredHerbs = q20.filter(v => Object.keys(herbLabels).includes(v))
-  if (triggeredHerbs.length > 0) triggered.push(`ذكرتِ أنكِ تأخذين ${triggeredHerbs.map(h => herbLabels[h]).join(' و')} — هذه الأعشاب تحتوي على مركبات تشبه الإستروجين. تناولها بدون إشراف متخصص قد يزيد الإستروجين ويخل بتوازن الهرمونات.`)
-  const herbCount = q20.filter(v => v !== 'none').length
-  if (herbCount >= 3) triggered.push(`ذكرتِ أنكِ تأخذين ${herbCount} أعشاب مختلفة معاً — الجمع بين أعشاب متعددة بدون توجيه متخصص خطر. التفاعلات بينها غير محسوبة وقد تعطي نتيجة عكسية على هرموناتكِ.`)
-  if (['socialMedia','dontknow'].includes(str('q21'))) triggered.push(`ذكرتِ أنكِ اخترتِ مكملاتكِ من السوشيال ميديا أو بدون معرفة واضحة — المكملات التي تُختار بناءً على إعلانات أو توصيات غير متخصصة غالباً لا تناسب وضعكِ الهرموني الفعلي، وقد تعالج شيئاً لستِ بحاجته.`)
-
-  // Sleep & stress
-  if (str('q22') === 'under5') triggered.push(`ذكرتِ أنكِ تنامين أقل من 5 ساعات — النوم أقل من 5 ساعات يقطع إنتاج هرمون النمو والميلاتونين، وكلاهما ضروريان لإصلاح الخلايا التناسلية وتنظيم دورة التبويض.`)
-  if (str('q22') === '5to6') triggered.push(`ذكرتِ أنكِ تنامين من 5 إلى 6 ساعات — هذا أقل من حاجة جسمكِ الهرمونية. الجسم يحتاج 7 ساعات على الأقل لإتمام دورة إصلاح الهرمونات أثناء النوم.`)
-  if (['12to2am','after2am','irregular'].includes(str('qSleepTime'))) triggered.push(`ذكرتِ أن وقت نومكِ بعد منتصف الليل أو غير منتظم — النوم المتأخر يعطل إفراز الميلاتونين الذي يحمي البويضة من الإجهاد التأكسدي. وبعد منتصف الليل يرتفع الكورتيزول بدل أن ينخفض.`)
-  if (['usually','always'].includes(str('q23'))) triggered.push(`ذكرتِ أنكِ تستيقظين كثيراً في الليل — الاستيقاظ المتكرر يمنع الجسم من الوصول لمراحل النوم العميق. وفي هذه المراحل تحديداً يُصلح الجسم اختلالاته الهرمونية.`)
-  if (str('q24') === 'severe') triggered.push(`ذكرتِ أن مستوى توترك شديد ومستمر — التوتر المزمن يرفع الكورتيزول باستمرار. والكورتيزول المرتفع يسرق المواد الخام التي يحتاجها جسمكِ لصنع هرمونات الخصوبة.`)
-  const q25 = arr('q25')
-  if (q25.includes('eat') || q25.includes('cry')) {
-    const ways = [...(q25.includes('eat') ? ['الأكل أكثر'] : []), ...(q25.includes('cry') ? ['الاحتفاظ بكل شيء لنفسكِ'] : [])]
-    triggered.push(`ذكرتِ أنكِ عند التوتر تلجئين إلى ${ways.join(' و')} — الأكل العاطفي يرفع الإنسولين، والكبت يرفع الكورتيزول، وكلاهما يؤثر على الخصوبة.`)
-  }
-  if (str('q26') === 'always') triggered.push(`ذكرتِ أن الجوال معكِ حتى وأنتِ تنامين — الضوء الأزرق من الشاشات يوقف إنتاج الميلاتونين. وبدون ميلاتونين كافٍ تبقى هرمونات التوتر مرتفعة حتى أثناء النوم.`)
-
-  // Exercise
-  if (str('q27') === 'never') triggered.push(`ذكرتِ أنكِ لا تتمرنين أبداً — غياب الحركة يضعف حساسية الإنسولين ويقلل تدفق الدم للرحم والمبيض. الحركة المنتظمة ليست رفاهية، بل جزء أساسي من بيئة الخصوبة.`)
-  if (str('q27') === '6to7') triggered.push(`ذكرتِ أنكِ تتمرنين 6 إلى 7 مرات بالأسبوع — التمرين المكثف جداً يرفع الكورتيزول ويرسل للجسم إشارة إجهاد. وهذا قد يوقف التبويض خاصة مع قلة السعرات الحرارية.`)
+  if (!q19.includes('vitD') && !q19.includes('folic')) triggered.push(`لا تأخذ فيتامين D ولا فوليك أسيد — هما الأساس العلمي لدعم الخصوبة.`)
+  if (str('q22') === 'under5') triggered.push(`أقل من 5 ساعات نوم — يقطع إنتاج هرمون النمو والميلاتونين اللازمين لإصلاح الخلايا التناسلية.`)
+  if (['12to2am', 'after2am', 'irregular'].includes(str('qSleepTime'))) triggered.push(`نوم متأخر أو غير منتظم — يعطل الميلاتونين الذي يحمي البويضة من الإجهاد التأكسدي.`)
+  if (['usually', 'always'].includes(str('q23'))) triggered.push(`صحيان ليلي متكرر — يمنع الجسم من الوصول لمراحل النوم العميق التي تُصلح الاختلالات الهرمونية.`)
+  if (str('q24') === 'severe') triggered.push(`توتر شديد مستمر — الكورتيزول المرتفع يسرق المواد الخام لصنع هرمونات الخصوبة.`)
+  if (str('q27') === 'never') triggered.push(`لا تتمرن أبداً — يضعف حساسية الإنسولين ويقلل تدفق الدم للرحم والمبيض.`)
+  if (str('q27') === '6to7') triggered.push(`تمرين 6-7 مرات بالأسبوع — التمرين المكثف يرفع الكورتيزول وقد يوقف التبويض.`)
   const q28 = arr('q28')
-  const gentleEx = ['walking','yoga','swimming','weights']
-  if (q28.includes('hiit') && !q28.some(v => gentleEx.includes(v))) triggered.push(`ذكرتِ أن تمارينكِ تمارين عالية الكثافة فقط (HIIT) — هذه التمارين وحدها ترفع الكورتيزول بشكل متكرر. الخصوبة تحتاج توازناً بين التمرين الشديد والتمارين الهادئة كاليوغا والمشي.`)
-
-  // Kitchen
-  if (['no','neverThought'].includes(str('q30'))) triggered.push(`ذكرتِ أنكِ لا تعرفين اختيار الزيت المناسب لدرجة الحرارة — الزيت المحروق أو غير المناسب ينتج مركبات التهابية تؤثر على جودة البويضة والبيئة الهرمونية.`)
-  const q31 = arr('q31')
-  if (q31.includes('teflon') && !q31.some(v => ['steel','castIron','ceramic'].includes(v))) triggered.push(`ذكرتِ أنكِ تستخدمين أواني التيفلون في الطبخ — الطبخ في التيفلون المخدوش يطلق مركبات تعمل كمعطلات هرمونية تتراكم في الجسم مع الوقت.`)
-  if (str('q32') === 'mostlySilicone') triggered.push(`ذكرتِ أن معظم أدواتكِ في المطبخ سيليكون — السيليكون عند تعرضه للحرارة العالية قد يطلق مركبات غير مستقرة. الأفضل استخدام المعدن أو الخشب.`)
-  if (str('q33') === 'aluminum') triggered.push(`ذكرتِ أنكِ تستخدمين ورق الألمنيوم دائماً في الطبخ — الطبخ المباشر في ورق الألمنيوم خاصة مع الأطعمة الحامضة يزيد انتقال الألمنيوم للطعام. وتراكمه في الجسم يؤثر على الجهاز العصبي والهرموني.`)
-  if (str('q34') === 'smallPlastic') triggered.push(`ذكرتِ أنكِ تشربين ماء معبأ في زجاجات بلاستيك صغيرة — هذه الزجاجات خاصة عند تعرضها للحرارة تطلق مادة BPA وBPS، وهي من أقوى المعطلات الهرمونية المعروفة.`)
-  const q35 = arr('q35')
-  if (q35.includes('plastic') || q35.includes('wrap')) triggered.push(`ذكرتِ أنكِ تحفظين الأكل في أوعية بلاستيكية أو نايلون — حفظ الأكل الساخن في البلاستيك يزيد انتقال المواد الكيميائية للطعام. وهذه المواد تقلد الإستروجين وتخل بالتوازن الهرموني.`)
-  const q51 = arr('q51')
-  const healthyCook = ['grill','steam','boil','airFryer']
-  if ((q51.includes('deepFry') || q51.includes('fryOil')) && !q51.some(v => healthyCook.includes(v))) triggered.push(`ذكرتِ أنكِ تعتمدين على القلي بشكل رئيسي — القلي العميق يعني استهلاكاً يومياً للدهون المتحولة الناتجة عن تسخين الزيت، وهي ترفع الالتهاب وتضر بجودة البويضة.`)
-
-  // Personal care
-  if (str('q36') === 'never' || str('q37') === 'never') triggered.push(`ذكرتِ أنكِ لا تقرئين مكونات منتجات العناية الشخصية — هذه المنتجات تحتوي على مواد مثل parabens وphthalates، وهي مواد تمتصها الجلد وتعمل كإستروجين صناعي داخل جسمكِ.`)
-  if (str('q38') === 'everyday') triggered.push(`ذكرتِ أنكِ تستخدمين الديودورانت كل يوم بدون استثناء — مضادات التعرق التقليدية تحتوي على الألمنيوم الذي يمتصه الجلد بالقرب من الغدد الليمفاوية، والتراكم المستمر يثير قلقاً هرمونياً حقيقياً.`)
-  if (arr('q39').includes('scented')) triggered.push(`ذكرتِ أنكِ تستخدمين فوطاً صحية معطرة — العطور المضافة للفوط تحتوي على مواد كيميائية تلامس منطقة حساسة هرمونياً بشكل يومي، وهذا التعرض المتكرر ليس بلا تأثير.`)
-  if (str('q41') === 'synthetic') triggered.push(`ذكرتِ أن ملابسكِ في الغالب من قماش صناعي مثل البوليستر أو النايلون — الأقمشة الصناعية تطلق microplastics تمتصها الجلد، كما أنها لا تسمح للجلد بالتنفس مما يؤثر على التوازن الحراري للجهاز التناسلي.`)
-
-  // Menstrual
-  if (str('q42') === 'under21') triggered.push(`ذكرتِ أن دورتكِ الشهرية أقل من 21 يوماً — الدورة القصيرة تشير إلى أن مرحلة الجسم الأصفر غير كافية. البيضة لا تحظى بالوقت الكافي للنضج قبل الإطراح.`)
-  if (str('q42') === 'over35') triggered.push(`ذكرتِ أن دورتكِ الشهرية أكثر من 35 يوماً — الدورة الطويلة تعكس غالباً تأخراً في التبويض أو غيابه، وهذا مباشرةً يؤثر على فرص الحمل.`)
-  if (str('q42') === 'irregular') triggered.push(`ذكرتِ أن دورتكِ الشهرية غير منتظمة تماماً — عدم الانتظام يخبرنا أن هناك اضطراباً في محور الهرمونات بين الدماغ والمبيض. الجسم فقد إيقاعه الطبيعي.`)
-  if (str('q43') === 'veryLight') triggered.push(`ذكرتِ أن كمية الدم في دورتكِ خفيفة جداً — الدم الخفيف جداً قد يشير إلى ضعف في بطانة الرحم أو انخفاض في الإستروجين، وكلاهما يؤثر على قدرة البيضة الملقحة على الانغراس.`)
-  if (str('q43') === 'veryHeavy') triggered.push(`ذكرتِ أن دورتكِ غزيرة جداً لدرجة تغيير الفوطة كل ساعة أو أقل — الغزارة الشديدة قد تكون علامة على خلل في البروجستيرون أو التهاب مزمن في بطانة الرحم.`)
-  if (str('q44') === 'severe') triggered.push(`ذكرتِ أن الألم الشديد يؤثر على يومكِ — الألم الشديد ليس طبيعياً وغالباً يشير إلى التهاب مزمن أو بداية بطانة رحم مهاجرة تحتاج تقييماً.`)
-  if (str('q44') === 'verySevere') triggered.push(`ذكرتِ أن الألم يمنعكِ من الحركة تماماً — هذا المستوى من الألم يستدعي تقييماً طبياً عاجلاً. الألم المشلّ مرتبط ببطانة الرحم المهاجرة، وهي من أكثر أسباب تأخر الحمل التي تُكتشف متأخراً.`)
-  if (str('q45') === 'regularlyLarge') triggered.push(`ذكرتِ أنكِ تلاحظين تجلطات كبيرة بشكل منتظم — التجلطات الكبيرة والمتكررة تشير إلى خلل في البروجستيرون وزيادة في الإستروجين، وهذا التوازن المختل يؤثر مباشرةً على جودة بطانة الرحم.`)
-  if (str('q46') === 'regularly') triggered.push(`ذكرتِ أنكِ تلاحظين نزيفاً بين الدورتين بشكل منتظم — هذا إشارة تحتاج انتباهاً. قد يعكس ضعفاً في مرحلة الجسم الأصفر أو تقلبات حادة في الإستروجين.`)
-  const q47symptoms = arr('q47').filter(v => v !== 'none')
-  const symptomLabels: Record<string, string> = { bloating: 'انتفاخ', moodSwings: 'تقلبات مزاجية', sugarCravings: 'رغبة شديدة في السكر', headache: 'صداع', breastPain: 'ألم في الثدي' }
-  if (q47symptoms.length >= 3) triggered.push(`ذكرتِ أنكِ تعانين من ${q47symptoms.length} أعراض قبل الدورة منها: ${q47symptoms.slice(0,3).map(s => symptomLabels[s] ?? s).join('، ')} — وجود أعراض متعددة قبل الدورة يشير إلى خلل في نسبة الإستروجين إلى البروجستيرون في النصف الثاني من دورتكِ.`)
-
-  // Caffeine
-  if (str('q48') === 'threePlus') triggered.push(`ذكرتِ أنكِ تشربين 3 أكواب قهوة أو شاي أو أكثر يومياً — الكافيين بهذه الكمية يرفع الكورتيزول ويضيق الأوعية الدموية المغذية للرحم، وبعض الدراسات تربطه بصعوبة الانغراس.`)
-  if (str('q49') === 'regularly') triggered.push(`ذكرتِ أنكِ تشربين مشروبات الطاقة بشكل منتظم — هذه المشروبات تجمع بين الكافيين العالي والسكر والمواد الحافظة. وهذا المزيج يرهق الغدة الكظرية ويرفع الكورتيزول بشكل حاد.`)
-  if (str('q50') === 'underOne') triggered.push(`ذكرتِ أنكِ تشربين أقل من لتر ماء يومياً — الجفاف الخفيف المزمن يؤثر على سماكة المخاط العنقي الضروري لحركة الحيوانات المنوية، ويقلل تدفق الدم للرحم والمبيض.`)
-
-  // Info sources
-  const q52 = arr('q52')
-  const badSources = ['social','whatsapp','friends','noResearch']
-  if (q52.some(v => badSources.includes(v)) && !q52.some(v => ['doctor','trustedSites'].includes(v))) triggered.push(`ذكرتِ أنكِ تعتمدين على السوشيال ميديا أو واتساب أو توصيات غير متخصصة للمعلومات الصحية — المعلومات من هذه المصادر غير مصفاة علمياً، وكثير مما يُنشر عن الخصوبة مبني على تجارب شخصية لا على أدلة سريرية.`)
-
-  // Thyroid
+  if (q28.includes('hiit') && !q28.some(v => ['walking', 'yoga', 'swimming', 'weights'].includes(v))) {
+    triggered.push(`تمرين HIIT فقط — يرفع الكورتيزول بشكل متكرر. تحتاج توازناً مع تمارين هادئة.`)
+  }
+  if (['no', 'neverThought'].includes(str('q30'))) triggered.push(`لا تعرف اختيار الزيت المناسب — الزيت المحروق ينتج مركبات التهابية تؤثر على جودة البويضة.`)
+  if (str('q34') === 'smallPlastic') triggered.push(`مياه زجاجات بلاستيك صغيرة — تطلق BPA وBPS عند الحرارة، وهي من أقوى المعطلات الهرمونية.`)
+  if (['no', 'neverThought'].includes(str('q42'))) {/* skip */ }
+  const q42 = str('q42')
+  if (q42 === 'under21') triggered.push(`دورة أقل من 21 يوماً — مرحلة الجسم الأصفر غير كافية، البيضة لا تحظى بوقت كافٍ للنضج.`)
+  if (q42 === 'over35') triggered.push(`دورة أكثر من 35 يوماً — يعكس تأخراً في التبويض أو غيابه.`)
+  if (q42 === 'irregular') triggered.push(`دورة غير منتظمة — اضطراب في محور الهرمونات بين الدماغ والمبيض.`)
+  if (str('q44') === 'verySevere') triggered.push(`ألم يمنع الحركة — يستدعي تقييماً عاجلاً. مرتبط ببطانة الرحم المهاجرة.`)
   const thyroidSymptoms = arr('q53').filter(v => v !== 'none')
-  const thyroidLabels: Record<string, string> = { hairLoss: 'تساقط شعر', fatigue: 'إرهاق شديد', coldHands: 'برود في اليدين', constipation: 'إمساك مزمن', fogBrain: 'صعوبة تركيز', weightGain: 'زيادة وزن بدون سبب' }
-  if (thyroidSymptoms.length >= 3) triggered.push(`ذكرتِ أنكِ تعانين من ${thyroidSymptoms.length} أعراض منها: ${thyroidSymptoms.slice(0,3).map(s => thyroidLabels[s] ?? s).join('، ')} — هذه الأعراض تشير إلى احتمال وجود خلل في الغدة الدرقية، والغدة الدرقية تتحكم في سرعة كل العمليات الهرمونية في جسمكِ بما فيها التبويض.`)
-
-  // Male factor
-  if (str('q54') === 'notDone') triggered.push(`ذكرتِ أن زوجكِ لم يجرِ تحليل السائل المنوي — الخصوبة مسؤولية مشتركة. 40% من حالات تأخر الحمل سببها عامل الذكورة، وتأجيل هذا التحليل يعني تأجيل نصف الصورة الكاملة.`)
-  if (str('q54') === 'refused') triggered.push(`ذكرتِ أن زوجكِ رفض إجراء تحليل السائل المنوي — غياب هذا التقييم يجعل أي خطة علاجية ناقصة. الحمل يحتاج بويضة صحية وحيواناً منوياً صحياً في نفس الوقت.`)
-  if (str('q57') === 'unhealthy') triggered.push(`ذكرتِ أن نمط حياة زوجكِ غير صحي — جودة الحيوانات المنوية تتأثر بشكل مباشر بالنظام الغذائي ومستوى الحركة. نمط حياة الزوج جزء لا يتجزأ من معادلة الخصوبة.`)
+  if (thyroidSymptoms.length >= 3) triggered.push(`${thyroidSymptoms.length} أعراض غدة درقية — احتمال خلل في الغدة التي تتحكم في كل العمليات الهرمونية.`)
+  const qSmoking = arr('qSmoking')
+  if (!qSmoking.includes('noSmoke') && qSmoking.length > 0) triggered.push(`تدخين / تعرض للدخان — يؤثر مباشرةً على جودة البويضة والبيئة الهرمونية.`)
+  if (str('q54') === 'refused') triggered.push(`زوجها رفض تحليل السائل المنوي — يجعل أي خطة علاجية ناقصة.`)
+  if (str('q54') === 'notDone') triggered.push(`زوجها لم يُجرِ تحليل السائل المنوي — 40% من حالات تأخر الحمل سببها عامل الذكورة.`)
+  if (str('q57') === 'unhealthy') triggered.push(`نمط حياة الزوج غير صحي — جودة الحيوانات المنوية تتأثر مباشرةً.`)
 
   return triggered
 }
 
 // ── Main export ────────────────────────────────────────────────────────────
 export function calculateScore(answers: Answers): ScoreResult {
-  const { bmiPoints, bmi } = calcBmi(answers)
+  const maritalStatus = (getStr(answers, 'qMaritalStatus') || 'single') as 'married' | 'engaged' | 'single'
+  const isMarried = maritalStatus === 'married'
+  const { bmiPoints, bmi, bmiBox } = calcBmi(answers)
 
-  const basicInfoEarned = scoreBasicInfo(answers, bmiPoints)
-  const dietEarned      = scoreDiet(answers)
-  const suppEarned      = scoreSupplements(answers)
-  const stressEarned    = scoreStress(answers)
-  const exerciseEarned  = scoreExercise(answers)
-  const kitchenEarned   = scoreKitchen(answers)
-  const careEarned      = scorePersonalCare(answers)
-  const menstrualEarned = scoreMenstrual(answers)
-  const caffeineEarned  = scoreCaffeine(answers)
-  const infoEarned      = scoreInfoSources(answers)
-  const thyroidEarned   = scoreThyroid(answers)
-  const maleEarned      = scoreMaleFactor(answers)
+  // Collect all question results
+  const qResults: Array<{ id: string; result: QResult }> = [
+    { id: 'q1', result: scoreQ1(answers) },
+    { id: 'bmi', result: { earned: bmiPoints, weight: 4, tracks: [], ...(bmiBox ? { box: bmiBox } : {}) } },
+    { id: 'q4', result: scoreQ4(answers) },
+    { id: 'q5', result: scoreQ5(answers) },
+    { id: 'q6', result: scoreQ6(answers) },
+    { id: 'q9', result: scoreQ9(answers) },
+    { id: 'q10', result: scoreQ10(answers) },
+    { id: 'q11', result: scoreQ11(answers) },
+    { id: 'q12', result: scoreQ12(answers) },
+    { id: 'q13', result: scoreQ13(answers) },
+    { id: 'q15', result: scoreQ15(answers) },
+    { id: 'q16', result: scoreQ16(answers) },
+    { id: 'q17', result: scoreQ17(answers) },
+    { id: 'qRestaurant', result: scoreQRestaurant(answers) },
+    { id: 'qSnacksFreq', result: scoreQSnacksFreq(answers) },
+    { id: 'qSnackType', result: scoreQSnackType(answers) },
+    { id: 'qBreakfast', result: scoreQBreakfast(answers) },
+    { id: 'qWorkMeal', result: scoreQWorkMeal(answers) },
+    { id: 'qSocialFreq', result: scoreQSocialFreq(answers) },
+    { id: 'qSocialFood', result: scoreQSocialFood(answers) },
+    { id: 'qSweetsRelation', result: scoreQSweetsRelation(answers) },
+    { id: 'qSweetsAwareness', result: scoreQSweetsAwareness(answers) },
+    { id: 'q18', result: scoreQ18(answers) },
+    { id: 'q19', result: scoreQ19(answers) },
+    { id: 'q20', result: scoreQ20(answers) },
+    { id: 'q21', result: scoreQ21(answers) },
+    { id: 'q22', result: scoreQ22(answers) },
+    { id: 'qSleepTime', result: scoreQSleepTime(answers) },
+    { id: 'q23', result: scoreQ23(answers) },
+    { id: 'q24', result: scoreQ24(answers) },
+    { id: 'q25', result: scoreQ25(answers) },
+    { id: 'q26', result: scoreQ26(answers) },
+    { id: 'q27', result: scoreQ27(answers) },
+    { id: 'q28', result: scoreQ28(answers) },
+    { id: 'q30', result: scoreQ30(answers) },
+    { id: 'q31', result: scoreQ31(answers) },
+    { id: 'q32', result: scoreQ32(answers) },
+    { id: 'q33', result: scoreQ33(answers) },
+    { id: 'q34', result: scoreQ34(answers) },
+    { id: 'q35', result: scoreQ35(answers) },
+    { id: 'q36', result: scoreQ36(answers) },
+    { id: 'q37', result: scoreQ37(answers) },
+    { id: 'q38', result: scoreQ38(answers) },
+    { id: 'q39', result: scoreQ39(answers) },
+    { id: 'q40', result: scoreQ40(answers) },
+    { id: 'q41', result: scoreQ41(answers) },
+    { id: 'q42', result: scoreQ42(answers) },
+    { id: 'q43', result: scoreQ43(answers) },
+    { id: 'q44', result: scoreQ44(answers) },
+    { id: 'q45', result: scoreQ45(answers) },
+    { id: 'q46', result: scoreQ46(answers) },
+    { id: 'q47', result: scoreQ47(answers) },
+    { id: 'qSmoking', result: scoreQSmoking(answers) },
+    { id: 'q48', result: scoreQ48(answers) },
+    { id: 'q49', result: scoreQ49(answers) },
+    { id: 'q50', result: scoreQ50(answers) },
+    { id: 'q51', result: scoreQ51(answers) },
+    { id: 'q52', result: scoreQ52(answers) },
+    { id: 'q53', result: scoreQ53(answers) },
+    ...(isMarried ? [
+      { id: 'q54', result: scoreQ54(answers) },
+      { id: 'q55', result: scoreQ55(answers) },
+      { id: 'q56', result: scoreQ56(answers) },
+      { id: 'q57', result: scoreQ57(answers) },
+    ] : []),
+  ]
 
-  const totalEarned = basicInfoEarned + dietEarned + suppEarned + stressEarned +
-    exerciseEarned + kitchenEarned + careEarned + menstrualEarned +
-    caffeineEarned + infoEarned + thyroidEarned + maleEarned
+  // Compute totals
+  let totalEarned = 0, totalMax = 0
+  const trackAccum: Record<TrackKey, TrackAccum> = {
+    aman:     { earned: 0, max: 0, boxes: [] },
+    ayad:     { earned: 0, max: 0, boxes: [] },
+    muatilat: { earned: 0, max: 0, boxes: [] },
+    iltihab:  { earned: 0, max: 0, boxes: [] },
+    binaa:    { earned: 0, max: 0, boxes: [] },
+  }
 
-  const totalMax = 7 + 64 + 14 + 25 + 7 + 19 + 13 + 22 + 9 + 3 + 5 + 10 // = 198
+  for (const { id, result } of qResults) {
+    totalEarned += result.earned
+    totalMax += result.weight
+    for (const t of result.tracks) {
+      trackAccum[t].earned += result.earned
+      trackAccum[t].max += result.weight
+    }
+    if (result.box) {
+      const pointsLost = result.weight - result.earned
+      for (const bt of result.box.tracks) {
+        trackAccum[bt].boxes.push({ name: result.box.name, questionId: id, pointsLost })
+      }
+    }
+  }
 
-  const finalScore = Math.round(clamp((totalEarned / totalMax) * 100, 0, 100))
+  // Build track results
+  const tracks = {} as Record<TrackKey, TrackResult>
+  for (const key of ['aman', 'ayad', 'muatilat', 'iltihab', 'binaa'] as TrackKey[]) {
+    const acc = trackAccum[key]
+    const pct = acc.max > 0 ? Math.round((acc.earned / acc.max) * 100) : 0
+    const sortedBoxes = [...acc.boxes].sort((a, b) => b.pointsLost - a.pointsLost)
+    tracks[key] = { earned: acc.earned, max: acc.max, pct, boxes: sortedBoxes }
+  }
+
+  // Total score
+  const finalScore = Math.round(Math.max(0, Math.min(100, (totalEarned / Math.max(totalMax, 1)) * 100)))
 
   let scoreCategory: string, scoreCategoryAr: string
-  if (finalScore >= 90) { scoreCategory = 'level1'; scoreCategoryAr = 'جسمك في وضع جيد - أساسك قوي' }
-  else if (finalScore >= 70) { scoreCategory = 'level2'; scoreCategoryAr = 'فيه فجوات واضحة تؤثر على هرموناتك' }
-  else if (finalScore >= 50) { scoreCategory = 'level3'; scoreCategoryAr = 'جسمك يعاني بصمت' }
-  else { scoreCategory = 'level4'; scoreCategoryAr = 'إنذار مبكر - عوامل كثيرة تؤثر على خصوبتك' }
+  if (finalScore >= 90) { scoreCategory = 'level1'; scoreCategoryAr = 'جسمكِ في وضع جيد - أساسكِ قوي' }
+  else if (finalScore >= 70) { scoreCategory = 'level2'; scoreCategoryAr = 'فيه فجوات واضحة تؤثر على هرموناتكِ' }
+  else if (finalScore >= 50) { scoreCategory = 'level3'; scoreCategoryAr = 'جسمكِ يعاني بصمت' }
+  else { scoreCategory = 'level4'; scoreCategoryAr = 'إنذار مبكر - عوامل كثيرة تؤثر على خصوبتكِ' }
 
+  // Top/second track — lowest pct first; among ties, most boxes wins
+  const trackKeys: TrackKey[] = ['aman', 'ayad', 'muatilat', 'iltihab', 'binaa']
+  const tracksWithBoxes = trackKeys.filter(k => tracks[k].boxes.length > 0)
+  const ranked = [...tracksWithBoxes].sort((a, b) => {
+    const pctDiff = tracks[a].pct - tracks[b].pct
+    if (pctDiff !== 0) return pctDiff
+    return tracks[b].boxes.length - tracks[a].boxes.length
+  })
+  const topTrack = ranked[0] ?? null
+  const secondTrack = ranked[1] ?? null
+  const intersectionPoint = topTrack && secondTrack
+    ? (INTERSECTION[intersectionKey(topTrack, secondTrack)] ?? 'التبويض')
+    : topTrack ? 'التبويض' : ''
+
+  // Factors
+  const allBoxQuestionIds = new Set(
+    trackKeys.flatMap(k => tracks[k].boxes.map(b => b.questionId))
+  )
+  const totalFactors = allBoxQuestionIds.size
+  const allBoxes = trackKeys.flatMap(k => tracks[k].boxes)
+  const maxLost = Math.max(...allBoxes.map(b => b.pointsLost), 0)
+  const threshold = maxLost >= 4 ? 4 : 3
+  const highImpactQuestions = new Set(allBoxes.filter(b => b.pointsLost >= threshold).map(b => b.questionId))
+  const highImpactFactors = highImpactQuestions.size
+
+  const tableIntroText = buildTableIntroText(topTrack, secondTrack, intersectionPoint)
   const triggeredSentences = getTriggeredSentences(answers, bmi)
+  const medicalBoxItems = getMedicalBoxItems(answers)
+  const maleFactorVariant = getMaleFactorVariant(answers)
+  const ageCategory = getAgeCategory(answers)
 
   return {
     finalScore,
     scoreCategory,
     scoreCategoryAr,
     scoreLevelText: LEVEL_TEXTS[scoreCategory],
-    sectionScores: {
-      basicInfo:   sec(basicInfoEarned, 7),
-      diet:        sec(dietEarned, 64),
-      supplements: sec(suppEarned, 14),
-      stress:      sec(stressEarned, 25),
-      exercise:    sec(exerciseEarned, 7),
-      kitchen:     sec(kitchenEarned, 19),
-      personalCare: sec(careEarned, 13),
-      menstrual:   sec(menstrualEarned, 22),
-      caffeine:    sec(caffeineEarned, 9),
-      infoSources: sec(infoEarned, 3),
-      thyroid:     sec(thyroidEarned, 5),
-      maleFactor:  sec(maleEarned, 10),
-    },
+    tracks,
+    topTrack,
+    secondTrack,
+    intersectionPoint,
+    totalFactors,
+    highImpactFactors,
+    ageCategory,
+    maritalStatus,
+    medicalBoxItems,
+    maleFactorVariant,
+    tableIntroText,
     triggeredSentences,
     bmi,
+    sectionScores: {},
   }
 }
+
+// Legacy type alias kept for backward compat
+export type SectionScores = Record<string, unknown>
+export type SectionScore = { earned: number; max: number; pct: number }

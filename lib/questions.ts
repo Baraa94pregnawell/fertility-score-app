@@ -24,10 +24,11 @@ export const SECTIONS: Section[] = [
   { id: 6, label: 'المطبخ وطريقة الطبخ' },
   { id: 7, label: 'العناية الشخصية' },
   { id: 8, label: 'الدورة الشهرية' },
-  { id: 9, label: 'الكافيين والمشروبات' },
-  { id: 10, label: 'مصادر المعلومات الصحية' },
-  { id: 11, label: 'أعراض الغدة الدرقية' },
-  { id: 12, label: 'عامل الذكورة' },
+  { id: 9, label: 'الكافيين والتدخين والمشروبات' },
+  { id: 10, label: 'طريقة الطبخ' },
+  { id: 11, label: 'مصادر المعلومات الصحية' },
+  { id: 12, label: 'أعراض الغدة الدرقية' },
+  { id: 13, label: 'عامل الذكورة' },
 ]
 
 export const QUESTIONS: Question[] = [
@@ -39,7 +40,16 @@ export const QUESTIONS: Question[] = [
       { value: '25to30', label: 'من 25 إلى 30 سنة' },
       { value: '31to35', label: 'من 31 إلى 35 سنة' },
       { value: '36to40', label: 'من 36 إلى 40 سنة' },
-      { value: 'over40', label: 'أكثر من 40 سنة' },
+      { value: '41to45', label: 'من 41 إلى 45 سنة' },
+      { value: 'over45', label: 'أكثر من 45 سنة' },
+    ],
+  },
+  { id: 'qMaritalStatus', sectionId: 1, type: 'single', required: true,
+    text: 'ما حالتك الاجتماعية؟',
+    options: [
+      { value: 'married', label: 'متزوجة' },
+      { value: 'engaged', label: 'مقبلة على الزواج' },
+      { value: 'single', label: 'غير متزوجة' },
     ],
   },
   { id: 'q2', sectionId: 1, type: 'number', required: true,
@@ -464,7 +474,8 @@ export const QUESTIONS: Question[] = [
       { value: 'eatFresh', label: 'آكل الأكل مباشرة ما أخزنه كثير' },
     ],
   },
-  { id: 'q51', sectionId: 6, type: 'multi', required: true,
+  // ── Section 10: طريقة الطبخ ──────────────────────────────────
+  { id: 'q51', sectionId: 10, type: 'multi', required: true,
     text: 'ما طريقة الطبخ التي تستخدمينها أكثر؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -592,7 +603,19 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // ── Section 9: الكافيين والمشروبات ───────────────────────────
+  // ── Section 9: الكافيين والتدخين والمشروبات ──────────────────
+  { id: 'qSmoking', sectionId: 9, type: 'multi', required: true,
+    text: 'ما علاقتك بالتدخين؟',
+    helperText: 'يمكنكِ اختيار أكثر من إجابة',
+    options: [
+      { value: 'noSmoke', label: 'لا أدخن ولا أتعرض للدخان' },
+      { value: 'passive', label: 'تدخين سلبي يومي فقط' },
+      { value: 'hookahOccasional', label: 'شيشة أحياناً' },
+      { value: 'hookahRegular', label: 'شيشة بانتظام' },
+      { value: 'cigarettes', label: 'سجائر' },
+      { value: 'vape', label: 'فيب أو سجائر إلكترونية' },
+    ],
+  },
   { id: 'q48', sectionId: 9, type: 'single', required: true,
     text: 'كم كوب قهوة أو شاي تشربين يومياً؟',
     options: [
@@ -620,8 +643,8 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // ── Section 10: مصادر المعلومات الصحية ───────────────────────
-  { id: 'q52', sectionId: 10, type: 'multi', required: true,
+  // ── Section 11: مصادر المعلومات الصحية ───────────────────────
+  { id: 'q52', sectionId: 11, type: 'multi', required: true,
     text: 'من أين تحصلين على معلوماتك الصحية عادةً؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -635,8 +658,8 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // ── Section 11: أعراض الغدة الدرقية ──────────────────────────
-  { id: 'q53', sectionId: 11, type: 'multi', required: true,
+  // ── Section 12: أعراض الغدة الدرقية ──────────────────────────
+  { id: 'q53', sectionId: 12, type: 'multi', required: true,
     text: 'هل تعانين من أي من هذه الأعراض بشكل منتظم؟',
     helperText: 'يمكنكِ اختيار أكثر من إجابة',
     options: [
@@ -650,8 +673,8 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // ── Section 12: عامل الذكورة ──────────────────────────────────
-  { id: 'q54', sectionId: 12, type: 'single', required: true,
+  // ── Section 13: عامل الذكورة (يظهر فقط للمتزوجات) ───────────
+  { id: 'q54', sectionId: 13, type: 'single', required: true,
     text: 'هل أجرى زوجك تحليل سائل منوي (سبيرم) في آخر سنتين؟',
     options: [
       { value: 'yesNormal', label: 'نعم، والنتائج طبيعية' },
@@ -660,7 +683,7 @@ export const QUESTIONS: Question[] = [
       { value: 'refused', label: 'رفض إجراء التحليل' },
     ],
   },
-  { id: 'q55', sectionId: 12, type: 'single', required: true,
+  { id: 'q55', sectionId: 13, type: 'single', required: true,
     text: 'هل تعرفين ما هي العوامل الغذائية التي تؤثر على جودة الحيوانات المنوية؟',
     options: [
       { value: 'knowApply', label: 'نعم، ونحن نطبق هذا فعلاً' },
@@ -668,7 +691,7 @@ export const QUESTIONS: Question[] = [
       { value: 'dontknow', label: 'لا، ما أعرف أن للغذاء علاقة بهذا' },
     ],
   },
-  { id: 'q56', sectionId: 12, type: 'single', required: true,
+  { id: 'q56', sectionId: 13, type: 'single', required: true,
     text: 'هل يأخذ زوجك أي مكملات غذائية لدعم الخصوبة؟',
     options: [
       { value: 'yesDoctor', label: 'نعم، بناءً على توصية طبيب' },
@@ -677,7 +700,7 @@ export const QUESTIONS: Question[] = [
       { value: 'neverThought', label: 'لم نفكر في هذا الأمر' },
     ],
   },
-  { id: 'q57', sectionId: 12, type: 'single', required: true,
+  { id: 'q57', sectionId: 13, type: 'single', required: true,
     text: 'كيف تصفين نمط حياة زوجك بشكل عام؟',
     options: [
       { value: 'healthy', label: 'صحي - يتمرن ويأكل بشكل معتدل' },

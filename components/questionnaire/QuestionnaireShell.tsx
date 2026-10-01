@@ -11,7 +11,7 @@ interface Props {
   token: string
 }
 
-const MULTI_QUESTIONS = new Set(['q4', 'q15', 'q16', 'q17', 'qSnackType', 'qSocialFood', 'q19', 'q20', 'q25', 'q28', 'q31', 'q35', 'q51', 'q39', 'q47', 'q52', 'q53'])
+const MULTI_QUESTIONS = new Set(['q4', 'q15', 'q16', 'q17', 'qSnackType', 'qSocialFood', 'q19', 'q20', 'q25', 'q28', 'q31', 'q35', 'q51', 'q39', 'q47', 'q52', 'q53', 'qSmoking'])
 const EXCLUSIVE_OPTIONS: Record<string, string[]> = {
   q4: ['none'],
   q15: ['none'],
@@ -20,6 +20,7 @@ const EXCLUSIVE_OPTIONS: Record<string, string[]> = {
   q19: ['none'],
   q20: ['none'],
   q28: ['none'],
+  qSmoking: ['noSmoke'],
 }
 
 export default function QuestionnaireShell({ token }: Props) {
@@ -29,8 +30,14 @@ export default function QuestionnaireShell({ token }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const question = QUESTIONS[currentIndex]
-  const totalQuestions = QUESTIONS.length
+  // Section 13 (male factor) is only shown to married users
+  const visibleQuestions = QUESTIONS.filter(q => {
+    if (q.sectionId === 13) return answers['qMaritalStatus'] === 'married'
+    return true
+  })
+
+  const question = visibleQuestions[currentIndex]
+  const totalQuestions = visibleQuestions.length
   const section = SECTIONS.find(s => s.id === question.sectionId)!
 
   const getValue = () => {
@@ -60,7 +67,7 @@ export default function QuestionnaireShell({ token }: Props) {
   const goNext = async () => {
     if (!canProceed()) return
 
-    if (currentIndex < QUESTIONS.length - 1) {
+    if (currentIndex < visibleQuestions.length - 1) {
       setCurrentIndex(i => i + 1)
       return
     }
@@ -88,7 +95,7 @@ export default function QuestionnaireShell({ token }: Props) {
     if (currentIndex > 0) setCurrentIndex(i => i - 1)
   }
 
-  const isLastQuestion = currentIndex === QUESTIONS.length - 1
+  const isLastQuestion = currentIndex === visibleQuestions.length - 1
 
   // height value for BMI display
   const heightValue = (answers['q2'] as string) || ''

@@ -5,7 +5,7 @@ import { generateReport } from '@/lib/gemini'
 import { sendReportWebhook, sendWebinarReportWebhook } from '@/lib/ghl'
 import { buildReportUrl } from '@/lib/tokens'
 import { prisma } from '@/lib/prisma'
-import type { Answers } from '@/lib/scoring'
+import type { Answers, ScoreResult } from '@/lib/scoring'
 
 function slugify(text: string): string {
   return text
@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
     const tokenRecord = tokenResult.record
 
     // 2. Calculate score deterministically
-    const { finalScore, scoreCategory, scoreCategoryAr, scoreLevelText, sectionScores, triggeredSentences, bmi } = calculateScore(answers)
+    const scoreResult: ScoreResult = calculateScore(answers)
+    const { finalScore, scoreCategory, scoreCategoryAr, scoreLevelText, triggeredSentences, bmi,
+            tracks, topTrack, secondTrack, intersectionPoint, totalFactors, highImpactFactors,
+            ageCategory, maritalStatus, medicalBoxItems, maleFactorVariant, tableIntroText } = scoreResult
 
     // 4. Save submission first
     const submission = await prisma.questionnaireSubmission.create({
@@ -53,35 +56,45 @@ export async function POST(req: NextRequest) {
       data: { usedAt: new Date() },
     })
 
-    // 6. Generate report narrative via Gemini
-    let reportContent
+    // 6. Generate Gemini narrative for staff view only
+    let geminiNarrative = ''
     try {
-      reportContent = await generateReport({
+      const geminiResult = await generateReport({
         score: finalScore,
         scoreCategory,
         scoreCategoryAr,
         scoreLevelText,
         triggeredSentences,
-        sectionScores,
+        sectionScores: {},
         answers,
         bmi,
       })
+      geminiNarrative = geminiResult?.narrative ?? ''
     } catch (err) {
       console.error('[submit-questionnaire] Gemini error:', err)
-      // Fallback narrative if Gemini fails
-      reportContent = {
-        narrative: 'بناءً على إجاباتكِ، قمنا بتحليل وضعكِ الغذائي والصحي بدقة. نتائجكِ تُشير إلى مجالات مهمة تستحق الاهتمام. للحصول على خطة مخصصة، نُشجعكِ على حجز مكالمتكِ التقييمية مع فريق PregnaWell.',
-      }
     }
 
     // 7. Build slug and save report
     const firstName = tokenRecord.userName?.split(' ')[0] || ''
     const slug = `${slugify(firstName)}-${generateId()}`
 
-    // Merge triggered sentences into reportContent so they're stored alongside the narrative
+    // reportContent stores all track data for user report + Gemini + sentences for staff
     const finalReportContent = {
-      ...reportContent,
+      // New 5-track format marker
+      trackScores: tracks,
+      topTrack,
+      secondTrack,
+      intersectionPoint,
+      totalFactors,
+      highImpactFactors,
+      ageCategory,
+      maritalStatus,
+      medicalBoxItems,
+      maleFactorVariant,
+      tableIntroText,
+      // Staff-only fields
       triggeredSentences,
+      geminiNarrative,
     }
 
     const report = await prisma.report.create({
@@ -92,7 +105,7 @@ export async function POST(req: NextRequest) {
         userName: tokenRecord.userName,
         fertilityScore: finalScore,
         scoreCategory,
-        sectionScores: JSON.stringify(sectionScores),
+        sectionScores: JSON.stringify({}),
         reportContent: JSON.stringify(finalReportContent),
       },
     })
