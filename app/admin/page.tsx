@@ -230,10 +230,15 @@ export default function AdminPage() {
                       </td>
                       <td style={S.td}>
                         {t.submissions.map(s => s.report ? (
-                          <div key={s.id} style={{ marginBottom: '4px' }}>
-                            <a href={`/report/${s.report.slug}`} target="_blank" style={{ color: '#3D2870', textDecoration: 'underline', fontSize: '13px' }}>
-                              Score: {s.report.fertilityScore}
-                            </a>
+                          <div key={s.id} style={{ marginBottom: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <a href={`/report/${s.report.slug}`} target="_blank" style={{ color: '#3D2870', textDecoration: 'underline', fontSize: '13px' }}>
+                                Score: {s.report.fertilityScore}
+                              </a>
+                              <a href={`/admin/report/${s.report.slug}`} target="_blank" style={{ padding: '2px 8px', backgroundColor: '#EDE9FE', color: '#6D28D9', borderRadius: '6px', fontSize: '11px', fontWeight: '600', textDecoration: 'none' }}>
+                                Staff View
+                              </a>
+                            </div>
                             <div style={{ fontSize: '11px', color: '#9CA3AF' }}>
                               {new Date(s.submittedAt).toLocaleDateString('en-GB')} · {new Date(s.submittedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                             </div>
