@@ -33,26 +33,8 @@ export default function ScoreGauge({ score, scoreCategoryAr }: Props) {
     return () => cancelAnimationFrame(raf)
   }, [score])
 
-  const r = 70
   const cx = 115
   const cy = 88
-
-  // Point on the semicircle for a given score (0–100)
-  // angle = π at score=0 (left), 0 at score=100 (right), arc goes through the top
-  function arcPoint(s: number): [number, number] {
-    const angle = Math.PI - (s / 100) * Math.PI
-    return [
-      Math.round((cx + r * Math.cos(angle)) * 10) / 10,
-      Math.round((cy - r * Math.sin(angle)) * 10) / 10,
-    ]
-  }
-
-  const [x0, y0]     = arcPoint(0)
-  const [x60, y60]   = arcPoint(60)
-  const [x70, y70]   = arcPoint(70)
-  const [x80, y80]   = arcPoint(80)
-  const [x90, y90]   = arcPoint(90)
-  const [x100, y100] = arcPoint(100)
 
   // Needle: -90° when score=0 (pointing left), +90° when score=100 (pointing right)
   const needleRotation = (displayScore / 100) * 180 - 90
@@ -63,29 +45,27 @@ export default function ScoreGauge({ score, scoreCategoryAr }: Props) {
     <div className="text-center">
       <p className="text-sm font-medium mb-2" style={{ color: '#6B5E7A' }}>درجة خصوبتكِ</p>
 
-      <svg width="230" height="122" viewBox="0 0 230 122" className="mx-auto">
-        {/* ── Colored arc segments (low→high = left→right) ── */}
-        {/* Red 0–60 */}
-        <path d={`M ${x0} ${y0} A ${r} ${r} 0 0 1 ${x60} ${y60}`}
-          fill="none" stroke="#e32f30" strokeWidth="14" strokeLinecap="butt" />
-        {/* Orange 60–70 */}
-        <path d={`M ${x60} ${y60} A ${r} ${r} 0 0 1 ${x70} ${y70}`}
-          fill="none" stroke="#f28130" strokeWidth="14" strokeLinecap="butt" />
-        {/* Yellow 70–80 */}
-        <path d={`M ${x70} ${y70} A ${r} ${r} 0 0 1 ${x80} ${y80}`}
-          fill="none" stroke="#ffd434" strokeWidth="14" strokeLinecap="butt" />
-        {/* Light green 80–90 */}
-        <path d={`M ${x80} ${y80} A ${r} ${r} 0 0 1 ${x90} ${y90}`}
-          fill="none" stroke="#80c12b" strokeWidth="14" strokeLinecap="butt" />
-        {/* Green 90–100 */}
-        <path d={`M ${x90} ${y90} A ${r} ${r} 0 0 1 ${x100} ${y100}`}
-          fill="none" stroke="#01ae24" strokeWidth="14" strokeLinecap="butt" />
+      <svg width="240" height="130" viewBox="0 0 240 130" className="mx-auto">
+        <defs>
+          <linearGradient id="arcGrad" gradientUnits="userSpaceOnUse" x1="45" y1="88" x2="185" y2="88">
+            <stop offset="0%"   stopColor="#e32f30" />
+            <stop offset="35%"  stopColor="#e85020" />
+            <stop offset="60%"  stopColor="#f28130" />
+            <stop offset="76%"  stopColor="#ffd434" />
+            <stop offset="90%"  stopColor="#80c12b" />
+            <stop offset="100%" stopColor="#01ae24" />
+          </linearGradient>
+        </defs>
 
-        {/* ── Needle ── */}
+        {/* Single smooth gradient arc with round caps */}
+        <path d="M 45 88 A 70 70 0 0 1 185 88"
+          fill="none" stroke="url(#arcGrad)" strokeWidth="18" strokeLinecap="round" />
+
+        {/* Needle */}
         <g transform={`rotate(${needleRotation}, ${cx}, ${cy})`}>
           <line
             x1={cx} y1={cy + 8}
-            x2={cx} y2={cy - (r - 14)}
+            x2={cx} y2={cy - 56}
             stroke="#1a1a2e"
             strokeWidth="2.5"
             strokeLinecap="round"
@@ -95,10 +75,10 @@ export default function ScoreGauge({ score, scoreCategoryAr }: Props) {
         <circle cx={cx} cy={cy} r={6} fill="#1a1a2e" />
         <circle cx={cx} cy={cy} r={2.5} fill="white" />
 
-        {/* ── 0 / 100 labels ── */}
-        <text x={x0} y={y0 + 15} textAnchor="middle" fontSize="11" fill="#9B8BA8"
+        {/* 0 / 100 labels */}
+        <text x="45" y="116" textAnchor="middle" fontSize="11" fill="#9B8BA8"
           fontFamily="IBM Plex Arabic, Arial, sans-serif">0</text>
-        <text x={x100} y={y100 + 15} textAnchor="middle" fontSize="11" fill="#9B8BA8"
+        <text x="185" y="116" textAnchor="middle" fontSize="11" fill="#9B8BA8"
           fontFamily="IBM Plex Arabic, Arial, sans-serif">100</text>
       </svg>
 

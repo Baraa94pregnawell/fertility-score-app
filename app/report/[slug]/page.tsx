@@ -120,6 +120,7 @@ export default async function ReportPage({ params }: Props) {
             tableIntroText, intersectionPoint } = content
     const levelText = LEVEL_TEXTS[normalizedCategory] || ''
     const ageMsg = AGE_MESSAGES[ageCategory] ?? AGE_MESSAGES.c
+    const firstName = report.userName?.split(' ')[0] || ''
 
     return (
       <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-cream)' }}>
@@ -133,22 +134,55 @@ export default async function ReportPage({ params }: Props) {
 
           {/* Score Card */}
           <div className="rounded-2xl p-6 mb-6 text-center" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
+            {firstName && (
+              <p className="text-base font-semibold mb-4" style={{ color: 'var(--purple-deep)' }}>
+                هذا تقريركِ، {firstName}
+              </p>
+            )}
             <ScoreGauge score={report.fertilityScore} scoreCategoryAr={badgeLabel} />
           </div>
 
-          {/* Level Text */}
+          {/* Letter from Maha */}
           {levelText && (
-            <div className="rounded-2xl p-5 mb-6" style={{ backgroundColor: 'white', border: `2px solid ${scoreColor}40` }}>
-              <p className="text-base leading-loose font-medium" style={{ color: scoreColor, whiteSpace: 'pre-line' }}>
+            <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#F3EEF8' }}>
+                  <span style={{ fontSize: 20 }}>💌</span>
+                </div>
+                <div>
+                  <p className="text-base font-bold" style={{ color: 'var(--purple-deep)' }}>رسالة من مها</p>
+                  <p className="text-xs" style={{ color: '#9B8BA8' }}>مؤسسة PregnaWell</p>
+                </div>
+              </div>
+              <p className="text-base leading-loose" style={{ color: 'var(--text-dark)', whiteSpace: 'pre-line' }}>
                 {levelText}
               </p>
             </div>
           )}
 
+          {/* HPO Axis */}
+          <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
+            <h2 className="text-base font-bold mb-3" style={{ color: 'var(--purple-deep)' }}>لماذا المسارات الخمسة؟</h2>
+            <p className="text-sm leading-loose mb-3" style={{ color: 'var(--text-dark)' }}>
+              الخصوبة ليست عن المبيضين وحدهما — هي نتيجة سلسلة هرمونية كاملة تبدأ من الدماغ.
+            </p>
+            <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+              {['الهيبوثالاموس', '←', 'النخامة', '←', 'المبيض'].map((item, i) => (
+                item === '←'
+                  ? <span key={i} style={{ color: 'var(--rose-dusty)', fontWeight: 700 }}>{item}</span>
+                  : <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: '#F3EEF8', color: 'var(--purple-deep)' }}>{item}</span>
+              ))}
+            </div>
+            <p className="text-sm leading-loose" style={{ color: '#6B5E7A' }}>
+              أي اضطراب في هذه السلسلة — من النوم، التوتر، التغذية، الالتهاب — يؤثر مباشرةً على التبويض وجودة البويضة.
+              المسارات الخمسة في تقريركِ تعكس هذا المحور بالكامل.
+            </p>
+          </div>
+
           {/* 5 Tracks Table */}
           <div className="rounded-2xl p-5 mb-5" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
-            <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--purple-deep)' }}>جدول المسارات</h2>
-            <p className="text-sm mb-4" style={{ color: '#6B5E7A' }}>كل مجموعة تعكس منطقة مختلفة تؤثر على خصوبتكِ</p>
+            <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--purple-deep)' }}>الصورة الكاملة لجسمكِ</h2>
+            <p className="text-sm mb-4" style={{ color: '#6B5E7A' }}>كل مسار يعكس منطقة مختلفة تؤثر على خصوبتكِ</p>
             <div className="space-y-4">
               {TRACK_ORDER.map(key => {
                 const track = trackScores[key]
