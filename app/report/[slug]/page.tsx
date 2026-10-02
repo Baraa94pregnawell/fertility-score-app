@@ -121,6 +121,50 @@ export default async function ReportPage({ params }: Props) {
     const firstName = report.userName?.split(' ')[0] || ''
     const scoreShortDesc = SCORE_SHORT_DESC[normalizedCategory] || SCORE_SHORT_DESC.level3
 
+    // First CTA — appears early in the report
+    const ctaCardFirst = (
+      <div className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: '#F3EEF8', border: '1px solid #E8DFF0' }}>
+        <div className="p-6">
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-4" style={{ backgroundColor: 'var(--purple-deep)' }}>
+            مكافأة خاصة من العيادة
+          </span>
+          <h2 className="text-xl font-bold leading-snug mb-4" style={{ color: 'var(--purple-deep)' }}>
+            لأنكِ أظهرتِ جديتكِ، نحن جاهزون لنساعدكِ على الانتقال إلى المرحلة التالية
+          </h2>
+          <p className="text-sm leading-loose mb-4" style={{ color: 'var(--text-dark)' }}>
+            أكملتِ التقييم، وكانت نتيجتكِ {report.fertilityScore} من 100. ولهذا نقدّم لكِ جلسة خاصة مع فريقنا:
+          </p>
+          <div className="space-y-3 mb-4">
+            <div className="flex gap-3 items-start p-4 rounded-xl" style={{ backgroundColor: 'white' }}>
+              <span className="font-bold text-base flex-shrink-0" style={{ color: 'var(--purple-deep)' }}>١</span>
+              <p className="text-sm leading-loose" style={{ color: 'var(--text-dark)' }}>
+                يجلس معكِ الفريق، ويشرح لكِ كيف تنظّمين كل هذه العوامل ضمن المراحل الثلاث للعلاج الصحي.
+              </p>
+            </div>
+            <div className="flex gap-3 items-start p-4 rounded-xl" style={{ backgroundColor: 'white' }}>
+              <span className="font-bold text-base flex-shrink-0" style={{ color: 'var(--purple-deep)' }}>٢</span>
+              <p className="text-sm leading-loose" style={{ color: 'var(--text-dark)' }}>
+                وإن حضرتِ في موعدكِ، وكنتِ جادة ومؤهلة، نعرض عليكِ البرنامج الملائم لحالتكِ، الذي تتابعين فيه شخصياً مع الأخصائية مها.
+              </p>
+            </div>
+          </div>
+          <div className="p-4 rounded-xl mb-5" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
+            <p className="text-sm font-semibold mb-2" style={{ color: 'var(--purple-deep)' }}>هذه الجلسة ليست لكل سيدة</p>
+            <p className="text-sm leading-loose" style={{ color: '#6B5E7A' }}>
+              إنها لكِ فقط إن كنتِ تطمحين لإكمال الطريق حتى النهاية، ومستعدة للالتزام بخطة حقيقية، وتريدين أن تنهي الضياع والتشتت بين النصائح والتجارب.
+            </p>
+          </div>
+          <p className="text-xs text-center mb-3" style={{ color: '#9B8BA8' }}>هذه المكافأة متاحة الآن فقط</p>
+          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
+            className="block w-full text-center py-3.5 rounded-xl font-bold text-white text-base"
+            style={{ backgroundColor: 'var(--purple-deep)' }}>
+            احجزي جلستكِ الآن
+          </a>
+        </div>
+      </div>
+    )
+
+    // Second CTA — appears after testimonials
     const ctaCard = (
       <div className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: '#F3EEF8', border: '1px solid #E8DFF0' }}>
         <div className="p-6">
@@ -417,7 +461,7 @@ export default async function ReportPage({ params }: Props) {
           )}
 
           {/* ── CTA card (first) ── */}
-          {!isWebinar && ctaCard}
+          {!isWebinar && ctaCardFirst}
 
           {/* ── ٦. الخطوة التالية — dark hero ── */}
           <div className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: 'var(--purple-deep)' }}>
@@ -462,7 +506,7 @@ export default async function ReportPage({ params }: Props) {
 
           {/* ── شهادات ── */}
           <div className="mb-6">
-            <p className="text-xs font-semibold mb-4 text-center" style={{ color: 'var(--rose-dusty)' }}>قالت عنّا</p>
+            <p className="text-lg font-bold mb-4 text-center" style={{ color: 'var(--purple-deep)' }}>سيدات بدأن من نفس النقطة</p>
             {[
               { id: 'CZpXsY8WlXE' },
               { id: 'gb1ZTAmlEVE' },
