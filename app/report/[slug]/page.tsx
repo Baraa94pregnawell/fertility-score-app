@@ -439,15 +439,14 @@ export default async function ReportPage({ params }: Props) {
             <p className="text-sm leading-loose mb-6" style={{ color: 'var(--text-dark)' }}>
               في تقريركِ، ظهرت العوامل التي تُربك محور الخصوبة لديكِ. لكن معرفة الأخطاء وحدها لا تكفي. ما يصنع الفرق هو أن تُنظِّم كل هذه العوامل بطريقة يستجيب لها جسمكِ.
             </p>
-            <div className="rounded-xl flex items-center justify-center aspect-video mb-6" style={{ backgroundColor: '#F3EEF8' }}>
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: '#E8DFF0' }}>
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" fill="var(--purple-deep)"/>
-                  </svg>
-                </div>
-                <p className="text-sm" style={{ color: '#9B8BA8' }}>[فيديو قصة السيدة]</p>
-              </div>
+            <div className="relative w-full mb-6 rounded-xl overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/CZpXsY8WlXE"
+                title="شهادة سيدة"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
             <div className="p-4 rounded-xl" style={{ backgroundColor: '#F9F4FF', border: '1px solid #E8DFF0' }}>
               <h3 className="text-base font-bold mb-2" style={{ color: 'var(--purple-deep)' }}>لا تخافي من رقمكِ</h3>
@@ -460,6 +459,28 @@ export default async function ReportPage({ params }: Props) {
 
           {/* ── CTA card (second) ── */}
           {!isWebinar && ctaCard}
+
+          {/* ── شهادات ── */}
+          <div className="mb-6">
+            <p className="text-xs font-semibold mb-4 text-center" style={{ color: 'var(--rose-dusty)' }}>قالت عنّا</p>
+            {[
+              { id: 'CZpXsY8WlXE' },
+              { id: 'gb1ZTAmlEVE' },
+              { id: '-Fi4QdQEZnw' },
+              { id: 'ETMiyJqC1g8' },
+              { id: 'qoS8usZhf-8' },
+            ].map(({ id }) => (
+              <div key={id} className="relative w-full rounded-xl overflow-hidden mb-4" style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={`https://www.youtube.com/embed/${id}`}
+                  title="شهادة"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ))}
+          </div>
 
           <div className="text-center text-sm py-4" style={{ color: '#9B8BA8' }}>
             PregnaWell © {new Date().getFullYear()} | hello@pregnawell.com
