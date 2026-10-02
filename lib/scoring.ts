@@ -303,8 +303,10 @@ function scoreQBreakfast(a: Answers): QResult {
 }
 
 function scoreQWorkMeal(a: Answers): QResult {
+  const v = getStr(a, 'qWorkMeal')
+  if (v === 'noWork') return { earned: 0, weight: 0, tracks: [] }
   const map: Record<string, number> = { homePrepared: 3, delivery: 2, whatever: 1, skipLunch: 0, snacksOnly: 0 }
-  const earned = map[getStr(a, 'qWorkMeal')] ?? 0
+  const earned = map[v] ?? 0
   return {
     earned, weight: 3, tracks: ['ayad'],
     ...(earned < 1.5 ? { box: { name: 'وجبات عمل غير منظمة', tracks: ['ayad'] } } : {}),
@@ -410,8 +412,10 @@ function scoreQ20(a: Answers): QResult {
 }
 
 function scoreQ21(a: Answers): QResult {
+  const v = getStr(a, 'q21')
+  if (v === 'none') return { earned: 0, weight: 0, tracks: [] }
   const map: Record<string, number> = { doctor: 3, articles: 2, friendFamily: 1, socialMedia: 0, dontknow: 0 }
-  const earned = map[getStr(a, 'q21')] ?? 0
+  const earned = map[v] ?? 0
   return {
     earned, weight: 3, tracks: ['binaa'],
     ...(earned < 1.5 ? { box: { name: 'مصدر مكملات غير موثوق', tracks: ['binaa'] } } : {}),
@@ -494,7 +498,7 @@ function scoreQ27(a: Answers): QResult {
 
 function scoreQ28(a: Answers): QResult {
   const q28 = getArr(a, 'q28')
-  const gentle = ['walking', 'yoga', 'swimming', 'weights']
+  const gentle = ['walking', 'yoga', 'swimming', 'weights', 'pilates']
   const moderate = ['running', 'dance']
   const hasGentle = q28.some(v => gentle.includes(v))
   const hasModerate = q28.some(v => moderate.includes(v))
@@ -882,6 +886,7 @@ function getTriggeredSentences(a: Answers, bmi: number): string[] {
   if (['fivePlus', 'everyday'].includes(str('qRestaurant'))) triggered.push(`مطاعم 5+ مرات بالأسبوع — تعرض يومي للدهون المتحولة والمواد الحافظة تغذي الالتهاب.`)
   if (str('qSnacksFreq') === 'insteadOfMeals') triggered.push(`سناكات بدل وجبات — يخلق تذبذباً مستمراً في سكر الدم يرهق الإنسولين.`)
   if (str('qBreakfast') === 'never') triggered.push(`لا تأكل فطوراً أبداً — يرفع الكورتيزول صباحاً ويزيد مقاومة الإنسولين.`)
+  if (str('qWorkMeal') === 'noWork') triggered.push(`لا تعمل خارج المنزل — وجباتها في المنزل أو خارجه (سؤال وجبة العمل غير قابل للتطبيق عليها).`)
   if (str('qSweetsRelation') === 'soothingCraving') triggered.push(`تأكل الحلويات للتهدئة — كورتيزول مرتفع يطلب سكراً، والسكر يرفع الإنسولين، والإنسولين يضرب التبويض.`)
   if (str('q18') === '6plus') triggered.push(`6 مكملات أو أكثر يومياً — قد يسبب تعارضاً في الامتصاص.`)
   const q19 = arr('q19')

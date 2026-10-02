@@ -220,6 +220,7 @@ export const QUESTIONS: Question[] = [
       { value: 'whatever', label: 'آكل ما هو متاح بعد ما أوصل' },
       { value: 'skipLunch', label: 'أتخطى الغداء وآكل بعدين' },
       { value: 'snacksOnly', label: 'سناكات بدل وجبة كاملة' },
+      { value: 'noWork', label: 'ليس لدي عمل، وجباتي في المنزل أو خارجه' },
     ],
   },
   { id: 'qSocialFreq', sectionId: 2, type: 'single', required: true,
@@ -259,6 +260,7 @@ export const QUESTIONS: Question[] = [
       { value: 'knowEmotional', label: 'أعرف إنها مرتبطة بتوتري أو مزاجي' },
       { value: 'thoughtNoAnswer', label: 'فكرت لكن ما وصلت لسبب' },
       { value: 'neverThought', label: 'لا، ما فكرت في الأمر' },
+      { value: 'noCravings', label: 'لا أشتهي الحلويات أبداً' },
     ],
   },
 
@@ -323,6 +325,7 @@ export const QUESTIONS: Question[] = [
       { value: 'friendFamily', label: 'نصحتني صديقة أو أحد من العائلة' },
       { value: 'socialMedia', label: 'شفت إعلاناً أو محتوى على السوشيال ميديا' },
       { value: 'dontknow', label: 'ما أعرف، اشتريتها لأنها كانت موجودة' },
+      { value: 'none', label: 'لا آخذ أي مكملات' },
     ],
   },
 
@@ -406,6 +409,7 @@ export const QUESTIONS: Question[] = [
       { value: 'walking', label: 'مشي خفيف' },
       { value: 'yoga', label: 'يوغا أو تمارين تنفس' },
       { value: 'swimming', label: 'سباحة' },
+      { value: 'pilates', label: 'بيلاتيس' },
       { value: 'running', label: 'ركض' },
       { value: 'weights', label: 'رفع أثقال' },
       { value: 'hiit', label: 'تمارين عالية الكثافة (HIIT)' },
