@@ -127,37 +127,32 @@ export default async function ReportPage({ params }: Props) {
           <span className="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-4" style={{ backgroundColor: 'var(--purple-deep)' }}>
             مكافأة خاصة من العيادة
           </span>
-          <h2 className="text-xl font-bold leading-snug mb-4" style={{ color: 'var(--purple-deep)' }}>
-            لأنكِ أظهرتِ جديتكِ، نحن جاهزون لنساعدكِ على الانتقال إلى المرحلة التالية
+          <h2 className="text-xl font-bold leading-snug mb-2" style={{ color: 'var(--purple-deep)' }}>
+            مكافأتكِ ما زالت بانتظاركِ
           </h2>
-          <p className="text-sm leading-loose mb-4" style={{ color: 'var(--text-dark)' }}>
-            أكملتِ التقييم، وكانت نتيجتكِ {report.fertilityScore} من 100. ولهذا نقدّم لكِ جلسة خاصة مع فريقنا:
+          <p className="text-base font-semibold mb-4" style={{ color: 'var(--text-dark)' }}>
+            خطوتكِ التالية أقرب مما تظنين
           </p>
-          <div className="space-y-3 mb-4">
-            <div className="flex gap-3 items-start p-4 rounded-xl" style={{ backgroundColor: 'white' }}>
-              <span className="font-bold text-base flex-shrink-0" style={{ color: 'var(--purple-deep)' }}>١</span>
-              <p className="text-sm leading-loose" style={{ color: 'var(--text-dark)' }}>
-                يجلس معكِ الفريق، ويشرح لكِ كيف تنظّمين كل هذه العوامل ضمن المراحل الثلاث للعلاج الصحي.
-              </p>
-            </div>
-            <div className="flex gap-3 items-start p-4 rounded-xl" style={{ backgroundColor: 'white' }}>
-              <span className="font-bold text-base flex-shrink-0" style={{ color: 'var(--purple-deep)' }}>٢</span>
-              <p className="text-sm leading-loose" style={{ color: 'var(--text-dark)' }}>
-                وإن حضرتِ في موعدكِ، وكنتِ جادة ومؤهلة، نعرض عليكِ البرنامج الملائم لحالتكِ، الذي تتابعين فيه شخصياً مع الأخصائية مها.
-              </p>
-            </div>
-          </div>
+          <p className="text-sm leading-loose mb-4" style={{ color: 'var(--text-dark)' }}>
+            نتيجتكِ {report.fertilityScore} من 100 ليست نهاية القصة، بل نقطة البداية. والجلسة الخاصة التي خصّصناها لكِ ما زالت متاحة.
+          </p>
+          <p className="text-sm leading-loose mb-4" style={{ color: 'var(--text-dark)' }}>
+            في الجلسة، نرتّب معكِ كل ما ظهر في تقريركِ، ونضع كل عامل في مكانه الصحيح ضمن مراحل العلاج الصحي الثلاث.
+          </p>
+          <p className="text-sm leading-loose mb-5" style={{ color: 'var(--text-dark)' }}>
+            وإن وجدنا أنكِ جاهزة فعلاً، نقترح عليكِ البرنامج الأنسب لحالتكِ، بمتابعة شخصية من الأخصائية مها.
+          </p>
           <div className="p-4 rounded-xl mb-5" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
-            <p className="text-sm font-semibold mb-2" style={{ color: 'var(--purple-deep)' }}>هذه الجلسة ليست لكل سيدة</p>
+            <p className="text-sm font-semibold mb-2" style={{ color: 'var(--purple-deep)' }}>قبل أن تحجزي</p>
             <p className="text-sm leading-loose" style={{ color: '#6B5E7A' }}>
-              إنها لكِ فقط إن كنتِ تطمحين لإكمال الطريق حتى النهاية، ومستعدة للالتزام بخطة حقيقية، وتريدين أن تنهي الضياع والتشتت بين النصائح والتجارب.
+              هذه الجلسة لمن تعبت من التنقّل بين النصائح المتضاربة، وتريد خطة واضحة تلتزم بها حتى تصل إلى النهاية.
             </p>
           </div>
-          <p className="text-xs text-center mb-3" style={{ color: '#9B8BA8' }}>هذه المكافأة متاحة الآن فقط</p>
+          <p className="text-xs text-center mb-3" style={{ color: '#9B8BA8' }}>المكافأة متاحة فقط الآن</p>
           <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
             className="block w-full text-center py-3.5 rounded-xl font-bold text-white text-base"
             style={{ backgroundColor: 'var(--purple-deep)' }}>
-            احجزي جلستكِ الآن
+            نعم، أريد حجز جلستي
           </a>
         </div>
       </div>
@@ -254,7 +249,7 @@ export default async function ReportPage({ params }: Props) {
               {[
                 { habit: 'الأمان', sub: 'النوم والتوتر والحميات', dest: 'الدماغ', destSub: 'يقرر: هل الوقت آمن؟' },
                 { habit: 'المعطلات الهرمونية', sub: 'مواد كيميائية تشبه الهرمونات', dest: 'الغدة النخامية', destSub: 'ترسل الأوامر للمبيض' },
-                { habit: 'الأبيض', sub: 'السكر والوزن', dest: 'المبيض', destSub: 'ينفّذ التبويض' },
+                { habit: 'الأيض', sub: 'السكر والوزن', dest: 'المبيض', destSub: 'ينفّذ التبويض' },
                 { habit: 'الالتهاب', sub: 'الأنظمة الغذائية الخطأ والأكل المصنع', dest: 'البويضة والرحم', destSub: 'الجودة والاستعداد' },
                 { habit: 'البناء', sub: 'البروتين والمكملات والماء: المواد التي يصنع منها الجسم هرموناته', dest: 'تصل إلى المحور كله', destSub: '' },
               ].map((row, i) => (
@@ -360,9 +355,11 @@ export default async function ReportPage({ params }: Props) {
             <p className="text-sm mb-4" style={{ color: 'var(--text-dark)', lineHeight: '2.2' }}>
               هذا الجدول ليس قائمة مهام. ظهرت عندكِ <strong>{totalFactors}</strong> عادة، لكن <strong>{highImpactFactors > 0 ? highImpactFactors : 3}</strong> عادات فقط لها الأثر الأكبر على جسمكِ. عندما تبدئين بها، يتحسن كثير من الباقي معها.
             </p>
-            <p className="text-sm mb-4" style={{ color: 'var(--text-dark)', lineHeight: '2.2' }}>
-              وهذا ما نراه في عيادتنا مرة بعد مرة: سيدات حملن قبل أن يُكملن نصف الطريق. السبب ليس أنهن غيّرن كل شيء، بل أنهن بدأن بالعادات الأهم، لا بالأسهل.
-            </p>
+            <div className="p-4 rounded-xl mb-4" style={{ backgroundColor: '#F9F4FF', border: '2px solid var(--purple-deep)' }}>
+              <p className="text-sm font-bold leading-loose" style={{ color: 'var(--purple-deep)', lineHeight: '2.2' }}>
+                وهذا ما نراه في عيادتنا مرة بعد مرة: سيدات حملن قبل أن يُكملن نصف الطريق. السبب ليس أنهن غيّرن كل شيء، بل أنهن بدأن بالعادات الأهم، لا بالأسهل!
+              </p>
+            </div>
             <p className="text-sm font-bold" style={{ color: 'var(--text-dark)' }}>
               أيّ العادات تبدئين بها، وبأي ترتيب؟ هذا ما صُممت له المراحل الثلاث في طريقتنا.
             </p>
@@ -472,7 +469,10 @@ export default async function ReportPage({ params }: Props) {
         {/* ── Sticky bar ── */}
         {!isWebinar && (
           <div className="fixed bottom-0 left-0 right-0 px-4 py-3 flex items-center justify-between gap-4 md:hidden" style={{ backgroundColor: 'var(--purple-deep)', zIndex: 50 }}>
-            <span className="text-white text-sm font-medium flex-1">مكالمتكِ التقييمية مدرجة في باقتكِ</span>
+            <div className="flex-1">
+              <span className="text-white text-sm font-bold block">احصلي على مكافأتكِ الآن</span>
+              <span className="text-xs block" style={{ color: '#D6C9F0' }}>بعد قراءة التقرير كاملاً</span>
+            </div>
             <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0" style={{ backgroundColor: 'var(--rose-dusty)', color: 'white' }}>
               احجزي الآن
             </a>
@@ -561,7 +561,10 @@ export default async function ReportPage({ params }: Props) {
 
       {!isWebinar && (
         <div className="fixed bottom-0 left-0 right-0 px-4 py-3 flex items-center justify-between gap-4 md:hidden" style={{ backgroundColor: 'var(--purple-deep)', zIndex: 50 }}>
-          <span className="text-white text-sm font-medium flex-1">مكالمتكِ التقييمية مدرجة في باقتكِ</span>
+          <div className="flex-1">
+            <span className="text-white text-sm font-bold block">احصلي على مكافأتكِ الآن</span>
+            <span className="text-xs block" style={{ color: '#D6C9F0' }}>بعد قراءة التقرير كاملاً</span>
+          </div>
           <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0" style={{ backgroundColor: 'var(--rose-dusty)', color: 'white' }}>احجزي الآن</a>
         </div>
       )}
