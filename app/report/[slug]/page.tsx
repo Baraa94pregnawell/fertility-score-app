@@ -121,82 +121,50 @@ export default async function ReportPage({ params }: Props) {
     const firstName = report.userName?.split(' ')[0] || ''
     const scoreShortDesc = SCORE_SHORT_DESC[normalizedCategory] || SCORE_SHORT_DESC.level3
 
-    // First CTA — appears early in the report
+    const WA_NUMBER = '971502804502'
+    const reportUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://score.pregnawell.com'}/report/${report.slug}`
+    const waMessage = `مرحباً، أكملتُ مقياس الخصوبة الذكي وكانت نتيجتي ${report.fertilityScore} من 100، وأريد مناقشة نتيجتي معكم!\nرابط تقريري: ${reportUrl}`
+    const waLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMessage)}`
+
+    // First CTA
     const ctaCardFirst = (
       <div className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: '#F3EEF8', border: '1px solid #E8DFF0' }}>
         <div className="p-6">
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-4" style={{ backgroundColor: 'var(--purple-deep)' }}>
-            مكافأة خاصة من العيادة
-          </span>
           <h2 className="text-xl font-bold leading-snug mb-4" style={{ color: 'var(--purple-deep)' }}>
-            لأنكِ أظهرتِ جديتكِ، نحن جاهزون لنساعدكِ على الانتقال إلى المرحلة التالية
+            نتيجتكِ قابلة للارتفاع
           </h2>
-          <p className="text-sm leading-loose mb-4" style={{ color: 'var(--text-dark)' }}>
-            أكملتِ التقييم، وكانت نتيجتكِ {report.fertilityScore} من 100. ولهذا نقدّم لكِ جلسة خاصة مع فريقنا:
+          <p className="text-sm leading-loose mb-3" style={{ color: 'var(--text-dark)' }}>
+            {report.fertilityScore} من 100 هي نقطة البداية.
           </p>
-          <div className="space-y-3 mb-4">
-            <div className="flex gap-3 items-start p-4 rounded-xl" style={{ backgroundColor: 'white' }}>
-              <span className="font-bold text-base flex-shrink-0" style={{ color: 'var(--purple-deep)' }}>١</span>
-              <p className="text-sm leading-loose" style={{ color: 'var(--text-dark)' }}>
-                يجلس معكِ الفريق، ويشرح لكِ كيف تنظّمين كل هذه العوامل ضمن المراحل الثلاث للعلاج الصحي.
-              </p>
-            </div>
-            <div className="flex gap-3 items-start p-4 rounded-xl" style={{ backgroundColor: 'white' }}>
-              <span className="font-bold text-base flex-shrink-0" style={{ color: 'var(--purple-deep)' }}>٢</span>
-              <p className="text-sm leading-loose" style={{ color: 'var(--text-dark)' }}>
-                وإن حضرتِ في موعدكِ، وكنتِ جادة ومؤهلة، نعرض عليكِ البرنامج الملائم لحالتكِ، الذي تتابعين فيه شخصياً مع الأخصائية مها.
-              </p>
-            </div>
-          </div>
-          <div className="p-4 rounded-xl mb-5" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
-            <p className="text-sm font-semibold mb-2" style={{ color: 'var(--purple-deep)' }}>هذه الجلسة ليست لكل سيدة</p>
-            <p className="text-sm leading-loose" style={{ color: '#6B5E7A' }}>
-              إنها لكِ فقط إن كنتِ تطمحين لإكمال الطريق حتى النهاية، ومستعدة للالتزام بخطة حقيقية، وتريدين أن تنهي الضياع والتشتت بين النصائح والتجارب.
-            </p>
-          </div>
-          <p className="text-xs text-center mb-3" style={{ color: '#9B8BA8' }}>هذه المكافأة متاحة الآن فقط</p>
-          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
+          <p className="text-sm leading-loose mb-3" style={{ color: 'var(--text-dark)' }}>
+            كل عامل ظهر في تقريركِ يمكن تغييره. والفرق الحقيقي يصنعه ترتيب الخطوات: بأي عادة تبدئين، وكيف تبنين عليها حتى يستجيب جسمكِ.
+          </p>
+          <p className="text-sm leading-loose mb-3" style={{ color: 'var(--text-dark)' }}>
+            وهذا ما نراه في عيادتنا مرة بعد مرة: السيدات اللواتي بدأن من المكان الصحيح، تقدّمن أسرع مما توقّعن.
+          </p>
+          <p className="text-sm leading-loose mb-5" style={{ color: 'var(--text-dark)' }}>
+            شاركينا نتيجتكِ على واتساب، ولنتحدث عنها معاً، وندرس الخيارات المناسبة لانتقالكِ للمرحلة القادمة.
+          </p>
+          <a href={waLink} target="_blank" rel="noopener noreferrer"
             className="block w-full text-center py-3.5 rounded-xl font-bold text-white text-base"
-            style={{ backgroundColor: 'var(--purple-deep)' }}>
-            احجزي جلستكِ الآن
+            style={{ backgroundColor: '#25D366' }}>
+            أرسلي نتيجتي على واتساب
           </a>
         </div>
       </div>
     )
 
-    // Second CTA — appears after testimonials
+    // Second CTA
     const ctaCard = (
       <div className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: '#F3EEF8', border: '1px solid #E8DFF0' }}>
         <div className="p-6">
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-4" style={{ backgroundColor: 'var(--purple-deep)' }}>
-            مكافأة خاصة من العيادة
-          </span>
-          <h2 className="text-xl font-bold leading-snug mb-2" style={{ color: 'var(--purple-deep)' }}>
-            مكافأتكِ ما زالت بانتظاركِ
-          </h2>
-          <p className="text-base font-semibold mb-4" style={{ color: 'var(--text-dark)' }}>
-            خطوتكِ التالية أقرب مما تظنين
+          <p className="text-lg font-bold leading-loose mb-5" style={{ color: 'var(--purple-deep)' }}>
+            نتيجتكِ {report.fertilityScore} من 100. أرسليها لفريقنا على واتساب، ولنتحدث عنها معاً!
           </p>
-          <p className="text-sm leading-loose mb-4" style={{ color: 'var(--text-dark)' }}>
-            نتيجتكِ {report.fertilityScore} من 100 ليست نهاية القصة، بل نقطة البداية. والجلسة الخاصة التي خصّصناها لكِ ما زالت متاحة.
-          </p>
-          <p className="text-sm leading-loose mb-4" style={{ color: 'var(--text-dark)' }}>
-            في الجلسة، نرتّب معكِ كل ما ظهر في تقريركِ، ونضع كل عامل في مكانه الصحيح ضمن مراحل العلاج الصحي الثلاث.
-          </p>
-          <p className="text-sm leading-loose mb-5" style={{ color: 'var(--text-dark)' }}>
-            وإن وجدنا أنكِ جاهزة فعلاً، نقترح عليكِ البرنامج الأنسب لحالتكِ، بمتابعة شخصية من الأخصائية مها.
-          </p>
-          <div className="p-4 rounded-xl mb-5" style={{ backgroundColor: 'white', border: '1px solid #E8DFF0' }}>
-            <p className="text-sm font-semibold mb-2" style={{ color: 'var(--purple-deep)' }}>قبل أن تحجزي</p>
-            <p className="text-sm leading-loose" style={{ color: '#6B5E7A' }}>
-              هذه الجلسة لمن تعبت من التنقّل بين النصائح المتضاربة، وتريد خطة واضحة تلتزم بها حتى تصل إلى النهاية.
-            </p>
-          </div>
-          <p className="text-xs text-center mb-3" style={{ color: '#9B8BA8' }}>المكافأة متاحة فقط الآن</p>
-          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
+          <a href={waLink} target="_blank" rel="noopener noreferrer"
             className="block w-full text-center py-3.5 rounded-xl font-bold text-white text-base"
-            style={{ backgroundColor: 'var(--purple-deep)' }}>
-            نعم، أريد حجز جلستي
+            style={{ backgroundColor: '#25D366' }}>
+            أرسلي نتيجتي على واتساب
           </a>
         </div>
       </div>
@@ -483,47 +451,15 @@ export default async function ReportPage({ params }: Props) {
             <p className="text-sm leading-loose mb-6" style={{ color: 'var(--text-dark)' }}>
               في تقريركِ، ظهرت العوامل التي تُربك محور الخصوبة لديكِ. لكن معرفة الأخطاء وحدها لا تكفي. ما يصنع الفرق هو أن تُنظِّم كل هذه العوامل بطريقة يستجيب لها جسمكِ.
             </p>
-            <div className="relative w-full mb-6 rounded-xl overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src="https://www.youtube.com/embed/qoS8usZhf-8"
-                title="شهادة سيدة"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
             <div className="p-4 rounded-xl" style={{ backgroundColor: '#F9F4FF', border: '1px solid #E8DFF0' }}>
-              <h3 className="text-base font-bold mb-2" style={{ color: 'var(--purple-deep)' }}>لا تخافي من رقمكِ</h3>
-              <p className="text-sm leading-loose mb-1" style={{ color: 'var(--text-dark)' }}>
-                بدأت معنا بدرجة قريبة من درجتكِ، والحمد لله تمّ حملها على خير.
+              <p className="text-sm leading-loose" style={{ color: 'var(--text-dark)' }}>
+                كل عامل ظهر في تقريركِ يمكن معالجته — وبرنامجنا مصمَّم خصيصاً لتنظيم هذه الخطوات بالترتيب الصحيح.
               </p>
-              <p className="text-xs" style={{ color: '#9B8BA8' }}>لكل سيدة رحلتها، والنتائج تختلف من حالة لأخرى.</p>
             </div>
           </div>
 
           {/* ── CTA card (second) ── */}
           {!isWebinar && ctaCard}
-
-          {/* ── شهادات ── */}
-          <div className="mb-6">
-            <p className="text-lg font-bold mb-4 text-center" style={{ color: 'var(--purple-deep)' }}>سيدات بدأن من نفس النقطة</p>
-            {[
-              { id: 'CZpXsY8WlXE' },
-              { id: 'gb1ZTAmlEVE' },
-              { id: '-Fi4QdQEZnw' },
-              { id: 'ETMiyJqC1g8' },
-            ].map(({ id }) => (
-              <div key={id} className="relative w-full rounded-xl overflow-hidden mb-4" style={{ paddingBottom: '56.25%' }}>
-                <iframe
-                  className="absolute inset-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${id}`}
-                  title="شهادة"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            ))}
-          </div>
 
           <div className="text-center text-sm py-4" style={{ color: '#9B8BA8' }}>
             PregnaWell © {new Date().getFullYear()} | hello@pregnawell.com
@@ -533,12 +469,12 @@ export default async function ReportPage({ params }: Props) {
         {/* ── Sticky bar ── */}
         {!isWebinar && (
           <div className="fixed bottom-0 left-0 right-0 px-4 py-3 flex items-center justify-between gap-4 md:hidden" style={{ backgroundColor: 'var(--purple-deep)', zIndex: 50 }}>
-            <div className="flex-1">
-              <span className="text-white text-sm font-bold block">احصلي على مكافأتكِ الآن</span>
-              <span className="text-xs block" style={{ color: '#D6C9F0' }}>بعد قراءة التقرير كاملاً</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-white text-sm font-bold block">حلمكِ بالأمومة يستحق خطة واضحة</span>
+              <span className="text-xs block truncate" style={{ color: '#D6C9F0' }}>لنراجع نتيجتكِ ونحدد خطوتكِ القادمة معاً</span>
             </div>
-            <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0" style={{ backgroundColor: 'var(--rose-dusty)', color: 'white' }}>
-              احجزي الآن
+            <a href={waLink} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#25D366' }}>
+              شاركينا نتيجتكِ
             </a>
           </div>
         )}
@@ -625,11 +561,11 @@ export default async function ReportPage({ params }: Props) {
 
       {!isWebinar && (
         <div className="fixed bottom-0 left-0 right-0 px-4 py-3 flex items-center justify-between gap-4 md:hidden" style={{ backgroundColor: 'var(--purple-deep)', zIndex: 50 }}>
-          <div className="flex-1">
-            <span className="text-white text-sm font-bold block">احصلي على مكافأتكِ الآن</span>
-            <span className="text-xs block" style={{ color: '#D6C9F0' }}>بعد قراءة التقرير كاملاً</span>
+          <div className="flex-1 min-w-0">
+            <span className="text-white text-sm font-bold block">حلمكِ بالأمومة يستحق خطة واضحة</span>
+            <span className="text-xs block truncate" style={{ color: '#D6C9F0' }}>لنراجع نتيجتكِ ونحدد خطوتكِ القادمة معاً</span>
           </div>
-          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0" style={{ backgroundColor: 'var(--rose-dusty)', color: 'white' }}>احجزي الآن</a>
+          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0 text-white" style={{ backgroundColor: '#25D366' }}>شاركينا نتيجتكِ</a>
         </div>
       )}
     </div>
