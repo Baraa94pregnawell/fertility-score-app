@@ -24,21 +24,26 @@ interface Stats {
   totalUsed: number
   totalReports: number
   tokensBySource: Record<string, number>
+  reportsBySource: Record<string, number>
   scoreDistribution: { label: string; count: number }[]
+  scoreDistributionGhl: { label: string; count: number }[]
+  scoreDistributionWebinar: { label: string; count: number }[]
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  ghl: 'شراء (GHL)',
-  webinar: 'تحدي / ويبينار',
-  manual: 'يدوي',
+  ghl: 'Purchased (GHL)',
+  webinar: 'Challenge',
+  manual: 'Manual',
 }
 
 const SOURCE_TABS = [
-  { value: '', label: 'الكل' },
-  { value: 'ghl', label: 'شراء' },
-  { value: 'webinar', label: 'تحدي' },
-  { value: 'manual', label: 'يدوي' },
+  { value: '', label: 'All' },
+  { value: 'ghl', label: 'Purchased' },
+  { value: 'webinar', label: 'Challenge' },
+  { value: 'manual', label: 'Manual' },
 ]
+
+const BAND_COLORS = ['#DC2626', '#D97706', '#CA8A04', '#65A30D', '#059669']
 
 export default function AdminPage() {
   const router = useRouter()
@@ -174,8 +179,9 @@ export default function AdminPage() {
     td: { padding: '12px 16px', fontSize: '14px', color: '#374151', borderBottom: '1px solid #F3F4F6' },
   }
 
-  // Stats bar chart max
-  const maxBandCount = stats ? Math.max(...stats.scoreDistribution.map(b => b.count), 1) : 1
+  const maxSplitCount = stats
+    ? Math.max(...stats.scoreDistributionGhl.map(b => b.count), ...stats.scoreDistributionWebinar.map(b => b.count), 1)
+    : 1
 
   return (
     <div style={S.page}>
@@ -192,12 +198,12 @@ export default function AdminPage() {
         <div style={S.card}>
           <h2 style={{ ...S.formH, marginBottom: '20px' }}>Overview</h2>
 
-          {/* KPI tiles */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+          {/* KPI tiles — row 1: token counts */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '12px' }}>
             {[
               { label: 'Total Tokens', value: stats.totalTokens, color: '#3D2870' },
-              { label: 'Accessed', value: stats.totalUsed, sub: `${Math.round(stats.totalUsed / Math.max(stats.totalTokens, 1) * 100)}%`, color: '#D97706' },
-              { label: 'Reports Done', value: stats.totalReports, sub: `${Math.round(stats.totalReports / Math.max(stats.totalTokens, 1) * 100)}% completion`, color: '#059669' },
+              { label: 'Accessed', value: stats.totalUsed, sub: `${Math.round(stats.totalUsed / Math.max(stats.totalTokens, 1) * 100)}% of total`, color: '#D97706' },
+              { label: 'Reports Done', value: stats.totalReports, sub: `${Math.round(stats.totalReports / Math.max(stats.totalUsed, 1) * 100)}% of accessed`, color: '#059669' },
               { label: 'Purchased (GHL)', value: stats.tokensBySource['ghl'] || 0, color: '#0EA5E9' },
               { label: 'Challenge', value: stats.tokensBySource['webinar'] || 0, color: '#8B5CF6' },
               { label: 'Manual', value: stats.tokensBySource['manual'] || 0, color: '#6B7280' },
@@ -210,21 +216,71 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {/* Score distribution */}
+          {/* KPI tiles — row 2: reports by source */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+            {[
+              { label: 'GHL Reports Done', value: stats.reportsBySource?.['ghl'] || 0, total: stats.tokensBySource['ghl'] || 0, color: '#0EA5E9' },
+              { label: 'Challenge Reports Done', value: stats.reportsBySource?.['webinar'] || 0, total: stats.tokensBySource['webinar'] || 0, color: '#8B5CF6' },
+              { label: 'Manual Reports Done', value: stats.reportsBySource?.['manual'] || 0, total: stats.tokensBySource['manual'] || 0, color: '#6B7280' },
+            ].map(tile => (
+              <div key={tile.label} style={{ padding: '16px', backgroundColor: '#F9FAFB', borderRadius: '10px', border: '1px solid #E5E7EB' }}>
+                <div style={{ fontSize: '24px', fontWeight: '700', color: tile.color }}>{tile.value}</div>
+                <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>{tile.label}</div>
+                <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{Math.round(tile.value / Math.max(tile.total, 1) * 100)}% completion</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Score distribution — split Purchased vs Challenge */}
           <div>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>Score Distribution ({stats.totalReports} reports)</div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '100px' }}>
-              {stats.scoreDistribution.map(band => (
-                <div key={band.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ fontSize: '11px', color: '#374151', fontWeight: '600' }}>{band.count}</div>
-                  <div style={{
-                    width: '100%',
-                    backgroundColor: '#3D2870',
-                    borderRadius: '4px 4px 0 0',
-                    height: `${Math.round((band.count / maxBandCount) * 68)}px`,
-                    minHeight: band.count > 0 ? '4px' : '0',
-                  }} />
-                  <div style={{ fontSize: '10px', color: '#9CA3AF', textAlign: 'center' }}>{band.label}</div>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+              Score Distribution — Purchased vs Challenge ({stats.totalReports} reports)
+            </div>
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#374151' }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#0EA5E9' }} /> Purchased (GHL)
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#374151' }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#8B5CF6' }} /> Challenge
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', height: '120px' }}>
+              {stats.scoreDistributionGhl.map((band, i) => {
+                const webBand = stats.scoreDistributionWebinar[i]
+                const ghlH = Math.round((band.count / maxSplitCount) * 80)
+                const webH = Math.round((webBand.count / maxSplitCount) * 80)
+                return (
+                  <div key={band.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', width: '100%' }}>
+                      {/* GHL bar */}
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ fontSize: '10px', color: '#374151', fontWeight: '600', marginBottom: '2px' }}>{band.count}</div>
+                        <div style={{ width: '100%', backgroundColor: BAND_COLORS[i], borderRadius: '3px 3px 0 0', height: `${ghlH}px`, minHeight: band.count > 0 ? '4px' : '0', opacity: 0.85 }} />
+                      </div>
+                      {/* Challenge bar */}
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ fontSize: '10px', color: '#374151', fontWeight: '600', marginBottom: '2px' }}>{webBand.count}</div>
+                        <div style={{ width: '100%', backgroundColor: '#8B5CF6', borderRadius: '3px 3px 0 0', height: `${webH}px`, minHeight: webBand.count > 0 ? '4px' : '0', opacity: 0.7 }} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#9CA3AF', textAlign: 'center' }}>{band.label}</div>
+                  </div>
+                )
+              })}
+            </div>
+            {/* Score range color key */}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' as const }}>
+              {[
+                { label: '<50 · Critical', color: '#DC2626' },
+                { label: '50–59 · Low', color: '#D97706' },
+                { label: '60–69 · Moderate', color: '#CA8A04' },
+                { label: '70–79 · Good', color: '#65A30D' },
+                { label: '80+ · Excellent', color: '#059669' },
+              ].map(s => (
+                <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#6B7280' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: s.color }} />
+                  {s.label}
                 </div>
               ))}
             </div>
