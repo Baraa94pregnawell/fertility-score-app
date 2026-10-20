@@ -11,25 +11,37 @@ export async function GET(req: NextRequest) {
 
   try {
     const search = req.nextUrl.searchParams.get('search') || ''
-    const tokens = await prisma.accessToken.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-      where: search
-        ? {
-            OR: [
-              { userEmail: { contains: search } },
-              { userName: { contains: search } },
-            ],
-          }
-        : undefined,
-      include: {
-        submissions: {
-          include: { report: true },
-          orderBy: { submittedAt: 'desc' },
+    const source = req.nextUrl.searchParams.get('source') || ''
+    const page = Math.max(0, parseInt(req.nextUrl.searchParams.get('page') || '0', 10))
+    const pageSize = 50
+
+    const where = {
+      ...(source ? { source } : {}),
+      ...(search ? {
+        OR: [
+          { userEmail: { contains: search } },
+          { userName: { contains: search } },
+        ],
+      } : {}),
+    }
+
+    const [tokens, total] = await Promise.all([
+      prisma.accessToken.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: pageSize,
+        skip: page * pageSize,
+        where,
+        include: {
+          submissions: {
+            include: { report: true },
+            orderBy: { submittedAt: 'desc' },
+          },
         },
-      },
-    })
-    return NextResponse.json({ tokens })
+      }),
+      prisma.accessToken.count({ where }),
+    ])
+
+    return NextResponse.json({ tokens, total, page, pageSize })
   } catch (err) {
     console.error('[admin/tokens] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
