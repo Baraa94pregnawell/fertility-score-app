@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+const BANDS = [
+  { label: 'Under 50', sub: 'Critical', min: 0, max: 49 },
+  { label: '50 to 59', sub: 'Low', min: 50, max: 59 },
+  { label: '60 to 69', sub: 'Moderate', min: 60, max: 69 },
+  { label: '70 to 79', sub: 'Good', min: 70, max: 79 },
+  { label: '80+', sub: 'Excellent', min: 80, max: 100 },
+]
+
 export async function GET(req: NextRequest) {
   const secret = req.headers.get('x-admin-secret')
   const isAdmin = secret === process.env.ADMIN_SECRET
@@ -10,52 +18,72 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [
-      totalTokens,
-      tokensBySource,
-      totalUsed,
-      allReports,
-    ] = await Promise.all([
-      prisma.accessToken.count(),
-      prisma.accessToken.groupBy({ by: ['source'], _count: { id: true } }),
-      prisma.accessToken.count({ where: { usedAt: { not: null } } }),
-      prisma.report.findMany({
-        select: {
-          fertilityScore: true,
-          submission: { select: { token: { select: { source: true } } } },
+    // Fetch every token with its submissions (desc) so we can find the latest report per person
+    const allTokens = await prisma.accessToken.findMany({
+      select: {
+        source: true,
+        usedAt: true,
+        submissions: {
+          select: {
+            report: { select: { fertilityScore: true } },
+            submittedAt: true,
+          },
+          orderBy: { submittedAt: 'desc' },
         },
-      }),
-    ])
+      },
+    })
 
-    const bands = [
-      { label: '<50', min: 0, max: 49 },
-      { label: '50–59', min: 50, max: 59 },
-      { label: '60–69', min: 60, max: 69 },
-      { label: '70–79', min: 70, max: 79 },
-      { label: '80+', min: 80, max: 100 },
-    ]
-
-    const inBand = (r: { fertilityScore: number }, b: { min: number; max: number }) =>
-      r.fertilityScore >= b.min && r.fertilityScore <= b.max
-
-    const ghlReports = allReports.filter(r => r.submission?.token?.source === 'ghl')
-    const webinarReports = allReports.filter(r => r.submission?.token?.source === 'webinar')
-
-    const reportsBySource: Record<string, number> = {}
-    for (const r of allReports) {
-      const src = r.submission?.token?.source || 'unknown'
-      reportsBySource[src] = (reportsBySource[src] || 0) + 1
+    type Agg = { total: number; completed: number; started: number; scores: number[] }
+    const agg: Record<string, Agg> = {
+      ghl: { total: 0, completed: 0, started: 0, scores: [] },
+      webinar: { total: 0, completed: 0, started: 0, scores: [] },
+      manual: { total: 0, completed: 0, started: 0, scores: [] },
     }
 
+    for (const token of allTokens) {
+      const src = token.source || 'ghl'
+      if (!agg[src]) agg[src] = { total: 0, completed: 0, started: 0, scores: [] }
+      agg[src].total++
+
+      // Most recent submission that produced a report = this person's score
+      const latestReport = token.submissions.find(s => s.report)?.report
+      if (latestReport) {
+        agg[src].completed++
+        agg[src].scores.push(latestReport.fertilityScore)
+      } else if (token.usedAt) {
+        agg[src].started++ // opened but did not finish
+      }
+    }
+
+    const avg = (scores: number[]) =>
+      scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null
+
+    const scoreDist = (scores: number[]) =>
+      BANDS.map(b => {
+        const count = scores.filter(s => s >= b.min && s <= b.max).length
+        return {
+          label: b.label,
+          sub: b.sub,
+          count,
+          pct: scores.length > 0 ? Math.round((count / scores.length) * 100) : 0,
+        }
+      })
+
+    const fmt = (src: string) => ({
+      total: agg[src]?.total ?? 0,
+      completed: agg[src]?.completed ?? 0,
+      started: agg[src]?.started ?? 0,
+      avg: avg(agg[src]?.scores ?? []),
+      ...(src !== 'manual' ? { scoreDistribution: scoreDist(agg[src]?.scores ?? []) } : {}),
+    })
+
     return NextResponse.json({
-      totalTokens,
-      totalUsed,
-      totalReports: allReports.length,
-      tokensBySource: Object.fromEntries(tokensBySource.map(r => [r.source, r._count.id])),
-      reportsBySource,
-      scoreDistribution: bands.map(b => ({ label: b.label, count: allReports.filter(r => inBand(r, b)).length })),
-      scoreDistributionGhl: bands.map(b => ({ label: b.label, count: ghlReports.filter(r => inBand(r, b)).length })),
-      scoreDistributionWebinar: bands.map(b => ({ label: b.label, count: webinarReports.filter(r => inBand(r, b)).length })),
+      total: allTokens.length,
+      bySource: {
+        ghl: fmt('ghl'),
+        webinar: fmt('webinar'),
+        manual: fmt('manual'),
+      },
     })
   } catch (err) {
     console.error('[admin/stats] error:', err)

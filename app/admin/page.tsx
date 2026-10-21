@@ -19,15 +19,21 @@ interface TokenRecord {
   }>
 }
 
+interface SourceStats {
+  total: number
+  completed: number
+  started: number
+  avg: number | null
+  scoreDistribution?: { label: string; sub: string; count: number; pct: number }[]
+}
+
 interface Stats {
-  totalTokens: number
-  totalUsed: number
-  totalReports: number
-  tokensBySource: Record<string, number>
-  reportsBySource: Record<string, number>
-  scoreDistribution: { label: string; count: number }[]
-  scoreDistributionGhl: { label: string; count: number }[]
-  scoreDistributionWebinar: { label: string; count: number }[]
+  total: number
+  bySource: {
+    ghl: SourceStats
+    webinar: SourceStats
+    manual: SourceStats
+  }
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -43,7 +49,15 @@ const SOURCE_TABS = [
   { value: 'manual', label: 'Manual' },
 ]
 
-const BAND_COLORS = ['#DC2626', '#D97706', '#CA8A04', '#65A30D', '#059669']
+const BANDS = [
+  { label: 'Under 50', sub: 'Critical', color: '#DC2626', colorLight: 'rgba(220,38,38,0.55)' },
+  { label: '50 to 59', sub: 'Low', color: '#D97706', colorLight: 'rgba(217,119,6,0.55)' },
+  { label: '60 to 69', sub: 'Moderate', color: '#CA8A04', colorLight: 'rgba(202,138,4,0.55)' },
+  { label: '70 to 79', sub: 'Good', color: '#65A30D', colorLight: 'rgba(101,163,13,0.55)' },
+  { label: '80+', sub: 'Excellent', color: '#059669', colorLight: 'rgba(5,150,105,0.55)' },
+]
+
+const STRIPE = `repeating-linear-gradient(-45deg, rgba(255,255,255,0.38) 0px, rgba(255,255,255,0.38) 3px, transparent 3px, transparent 8px)`
 
 export default function AdminPage() {
   const router = useRouter()
@@ -63,6 +77,7 @@ export default function AdminPage() {
   const [genError, setGenError] = useState('')
   const [revokeConfirm, setRevokeConfirm] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [tooltip, setTooltip] = useState<{ key: string; text: string } | null>(null)
 
   const PAGE_SIZE = 50
 
@@ -179,8 +194,12 @@ export default function AdminPage() {
     td: { padding: '12px 16px', fontSize: '14px', color: '#374151', borderBottom: '1px solid #F3F4F6' },
   }
 
-  const maxSplitCount = stats
-    ? Math.max(...stats.scoreDistributionGhl.map(b => b.count), ...stats.scoreDistributionWebinar.map(b => b.count), 1)
+  const maxPct = stats
+    ? Math.max(
+        ...(stats.bySource.ghl.scoreDistribution?.map(b => b.pct) ?? [0]),
+        ...(stats.bySource.webinar.scoreDistribution?.map(b => b.pct) ?? [0]),
+        1,
+      )
     : 1
 
   return (
@@ -194,99 +213,167 @@ export default function AdminPage() {
       <p style={S.sub}>{role === 'readonly' ? 'View user reports and scores' : 'Generate and manage user access tokens'}</p>
 
       {/* ── Stats Dashboard ── */}
-      {stats && (
-        <div style={S.card}>
-          <h2 style={{ ...S.formH, marginBottom: '20px' }}>Overview</h2>
+      {stats && (() => {
+        const ghl = stats.bySource.ghl
+        const web = stats.bySource.webinar
+        const man = stats.bySource.manual
+        const total = stats.total
 
-          {/* KPI tiles — row 1: token counts */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '12px' }}>
-            {[
-              { label: 'Total Tokens', value: stats.totalTokens, color: '#3D2870' },
-              { label: 'Accessed', value: stats.totalUsed, sub: `${Math.round(stats.totalUsed / Math.max(stats.totalTokens, 1) * 100)}% of total`, color: '#D97706' },
-              { label: 'Reports Done', value: stats.totalReports, sub: `${Math.round(stats.totalReports / Math.max(stats.totalUsed, 1) * 100)}% of accessed`, color: '#059669' },
-              { label: 'Purchased (GHL)', value: stats.tokensBySource['ghl'] || 0, color: '#0EA5E9' },
-              { label: 'Challenge', value: stats.tokensBySource['webinar'] || 0, color: '#8B5CF6' },
-              { label: 'Manual', value: stats.tokensBySource['manual'] || 0, color: '#6B7280' },
-            ].map(tile => (
-              <div key={tile.label} style={{ padding: '16px', backgroundColor: '#F9FAFB', borderRadius: '10px', border: '1px solid #E5E7EB' }}>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: tile.color }}>{tile.value}</div>
-                <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>{tile.label}</div>
-                {tile.sub && <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{tile.sub}</div>}
-              </div>
-            ))}
-          </div>
-
-          {/* KPI tiles — row 2: reports by source */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '24px' }}>
-            {[
-              { label: 'GHL Reports Done', value: stats.reportsBySource?.['ghl'] || 0, total: stats.tokensBySource['ghl'] || 0, color: '#0EA5E9' },
-              { label: 'Challenge Reports Done', value: stats.reportsBySource?.['webinar'] || 0, total: stats.tokensBySource['webinar'] || 0, color: '#8B5CF6' },
-              { label: 'Manual Reports Done', value: stats.reportsBySource?.['manual'] || 0, total: stats.tokensBySource['manual'] || 0, color: '#6B7280' },
-            ].map(tile => (
-              <div key={tile.label} style={{ padding: '16px', backgroundColor: '#F9FAFB', borderRadius: '10px', border: '1px solid #E5E7EB' }}>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: tile.color }}>{tile.value}</div>
-                <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>{tile.label}</div>
-                <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{Math.round(tile.value / Math.max(tile.total, 1) * 100)}% completion</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Score distribution — split Purchased vs Challenge */}
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
-              Score Distribution — Purchased vs Challenge ({stats.totalReports} reports)
-            </div>
-            {/* Legend */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#374151' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#0EA5E9' }} /> Purchased (GHL)
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#374151' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#8B5CF6' }} /> Challenge
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', height: '120px' }}>
-              {stats.scoreDistributionGhl.map((band, i) => {
-                const webBand = stats.scoreDistributionWebinar[i]
-                const ghlH = Math.round((band.count / maxSplitCount) * 80)
-                const webH = Math.round((webBand.count / maxSplitCount) * 80)
-                return (
-                  <div key={band.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', width: '100%' }}>
-                      {/* GHL bar */}
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div style={{ fontSize: '10px', color: '#374151', fontWeight: '600', marginBottom: '2px' }}>{band.count}</div>
-                        <div style={{ width: '100%', backgroundColor: BAND_COLORS[i], borderRadius: '3px 3px 0 0', height: `${ghlH}px`, minHeight: band.count > 0 ? '4px' : '0', opacity: 0.85 }} />
-                      </div>
-                      {/* Challenge bar */}
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div style={{ fontSize: '10px', color: '#374151', fontWeight: '600', marginBottom: '2px' }}>{webBand.count}</div>
-                        <div style={{ width: '100%', backgroundColor: '#8B5CF6', borderRadius: '3px 3px 0 0', height: `${webH}px`, minHeight: webBand.count > 0 ? '4px' : '0', opacity: 0.7 }} />
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '10px', color: '#9CA3AF', textAlign: 'center' }}>{band.label}</div>
-                  </div>
-                )
-              })}
-            </div>
-            {/* Score range color key */}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' as const }}>
-              {[
-                { label: '<50 · Critical', color: '#DC2626' },
-                { label: '50–59 · Low', color: '#D97706' },
-                { label: '60–69 · Moderate', color: '#CA8A04' },
-                { label: '70–79 · Good', color: '#65A30D' },
-                { label: '80+ · Excellent', color: '#059669' },
-              ].map(s => (
-                <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#6B7280' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: s.color }} />
-                  {s.label}
+        const progressRow = (
+          label: string,
+          color: string,
+          src: SourceStats,
+        ) => {
+          const pct = Math.round((src.completed / Math.max(src.total, 1)) * 100)
+          return (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '10px 0', borderBottom: '1px solid #F3F4F6' }}>
+              <div style={{ width: '100px', flexShrink: 0, fontSize: '13px', fontWeight: '600', color: '#374151' }}>{label}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ height: '8px', backgroundColor: '#E5E7EB', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: '4px', transition: 'width 0.4s ease' }} />
                 </div>
-              ))}
+                <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '5px' }}>
+                  {src.completed} completed / {src.total} total · {pct}%
+                </div>
+                {src.started > 0 && (
+                  <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>
+                    {src.started} opened but did not complete
+                  </div>
+                )}
+              </div>
             </div>
+          )
+        }
+
+        return (
+          <div style={{ ...S.card, marginBottom: '24px' }}>
+            <h2 style={{ ...S.formH, marginBottom: '24px' }}>Overview</h2>
+
+            {/* Section 1: Where people came from */}
+            <div style={{ marginBottom: '28px' }}>
+              <div style={{ fontSize: '11px', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '12px' }}>Where people came from</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+                {[
+                  { label: 'Total access granted', value: total, sub: null, color: '#3D2870' },
+                  { label: 'Purchased (GHL)', value: ghl.total, sub: `${Math.round((ghl.total / Math.max(total, 1)) * 100)}% of total`, color: '#0EA5E9' },
+                  { label: 'Challenge (free)', value: web.total, sub: `${Math.round((web.total / Math.max(total, 1)) * 100)}% of total`, color: '#8B5CF6' },
+                  { label: 'Manual', value: man.total, sub: `${Math.round((man.total / Math.max(total, 1)) * 100)}% of total`, color: '#6B7280' },
+                ].map(tile => (
+                  <div key={tile.label} style={{ padding: '16px', backgroundColor: '#F9FAFB', borderRadius: '10px', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: '28px', fontWeight: '700', color: tile.color, lineHeight: 1 }}>{tile.value}</div>
+                    <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>{tile.label}</div>
+                    {tile.sub && <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{tile.sub}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 2: Who completed the tool */}
+            <div style={{ marginBottom: '32px' }}>
+              <div style={{ fontSize: '11px', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '4px' }}>Who completed the tool</div>
+              {progressRow('Purchased', '#0EA5E9', ghl)}
+              {progressRow('Challenge', '#8B5CF6', web)}
+              {progressRow('Manual', '#6B7280', man)}
+            </div>
+
+            {/* Section 3: Score distribution */}
+            {ghl.scoreDistribution && web.scoreDistribution && (() => {
+              const ghlDist = ghl.scoreDistribution!
+              const webDist = web.scoreDistribution!
+
+              return (
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '12px' }}>Score distribution, Purchased vs Challenge</div>
+
+                  {/* Legend row 1: sources */}
+                  <div style={{ display: 'flex', gap: '20px', marginBottom: '6px', flexWrap: 'wrap' as const }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12px', color: '#374151' }}>
+                      <div style={{ width: '14px', height: '14px', borderRadius: '3px', backgroundColor: '#6B7280' }} />
+                      Purchased (n={ghl.completed})
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12px', color: '#374151' }}>
+                      <div style={{ width: '14px', height: '14px', borderRadius: '3px', background: `${STRIPE}, #9CA3AF` }} />
+                      Challenge (n={web.completed})
+                    </div>
+                  </div>
+
+                  {/* Legend row 2: score bands */}
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' as const }}>
+                    {BANDS.map(b => (
+                      <div key={b.label} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#6B7280' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: b.color }} />
+                        {b.label} · {b.sub}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Chart */}
+                  <div style={{ overflowX: 'auto' as const }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', minWidth: '360px', paddingBottom: '4px' }}>
+                      {BANDS.map((band, i) => {
+                        const g = ghlDist[i]
+                        const w = webDist[i]
+                        const gH = Math.max(Math.round((g.pct / maxPct) * 88), g.pct > 0 ? 4 : 0)
+                        const wH = Math.max(Math.round((w.pct / maxPct) * 88), w.pct > 0 ? 4 : 0)
+                        const gKey = `${i}-ghl`
+                        const wKey = `${i}-web`
+                        return (
+                          <div key={band.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', width: '100%' }}>
+                              {/* Purchased bar */}
+                              <div
+                                style={{ flex: 1, position: 'relative' as const, cursor: 'default' }}
+                                onMouseEnter={() => setTooltip({ key: gKey, text: `${g.pct}% · ${g.count} people` })}
+                                onMouseLeave={() => setTooltip(null)}
+                              >
+                                {tooltip?.key === gKey && (
+                                  <div style={{ position: 'absolute' as const, bottom: '100%', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#1F2937', color: 'white', padding: '4px 8px', borderRadius: '5px', fontSize: '11px', whiteSpace: 'nowrap' as const, zIndex: 20, marginBottom: '4px' }}>
+                                    {tooltip.text}
+                                  </div>
+                                )}
+                                <div style={{ fontSize: '11px', color: '#374151', fontWeight: '600', textAlign: 'center' as const, marginBottom: '3px' }}>{g.pct}%</div>
+                                <div style={{ width: '100%', height: `${gH}px`, minHeight: g.pct > 0 ? '4px' : '0', backgroundColor: band.color, borderRadius: '3px 3px 0 0' }} />
+                              </div>
+                              {/* Challenge bar */}
+                              <div
+                                style={{ flex: 1, position: 'relative' as const, cursor: 'default' }}
+                                onMouseEnter={() => setTooltip({ key: wKey, text: `${w.pct}% · ${w.count} people` })}
+                                onMouseLeave={() => setTooltip(null)}
+                              >
+                                {tooltip?.key === wKey && (
+                                  <div style={{ position: 'absolute' as const, bottom: '100%', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#1F2937', color: 'white', padding: '4px 8px', borderRadius: '5px', fontSize: '11px', whiteSpace: 'nowrap' as const, zIndex: 20, marginBottom: '4px' }}>
+                                    {tooltip.text}
+                                  </div>
+                                )}
+                                <div style={{ fontSize: '11px', color: '#374151', fontWeight: '600', textAlign: 'center' as const, marginBottom: '3px' }}>{w.pct}%</div>
+                                <div style={{ width: '100%', height: `${wH}px`, minHeight: w.pct > 0 ? '4px' : '0', background: `${STRIPE}, ${band.colorLight}`, borderRadius: '3px 3px 0 0' }} />
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '10px', color: '#9CA3AF', textAlign: 'center' as const, lineHeight: 1.3 }}>{band.label}<br /><span style={{ fontWeight: '600' }}>{band.sub}</span></div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Average scores */}
+                  <div style={{ display: 'flex', gap: '24px', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #F3F4F6' }}>
+                    <div style={{ fontSize: '12px', color: '#6B7280' }}>
+                      Average score
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#0EA5E9', fontWeight: '600' }}>
+                      Purchased: {ghl.avg ?? '—'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#8B5CF6', fontWeight: '600' }}>
+                      Challenge: {web.avg ?? '—'}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Generate Token form — admin only */}
       {role === 'admin' && <div style={S.card}>
@@ -342,12 +429,12 @@ export default function AdminPage() {
                 {tab.label}
                 {stats && tab.value && (
                   <span style={{ marginRight: '4px', opacity: 0.75 }}>
-                    {' '}({stats.tokensBySource[tab.value] || 0})
+                    {' '}({stats.bySource[tab.value as keyof typeof stats.bySource]?.total || 0})
                   </span>
                 )}
                 {!tab.value && stats && (
                   <span style={{ marginRight: '4px', opacity: 0.75 }}>
-                    {' '}({stats.totalTokens})
+                    {' '}({stats.total})
                   </span>
                 )}
               </button>
