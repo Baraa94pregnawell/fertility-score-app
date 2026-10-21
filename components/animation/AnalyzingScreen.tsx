@@ -62,7 +62,7 @@ export default function AnalyzingScreen({ slug }: Props) {
       setRingProgress(frame)
       if (frame >= total) {
         clearInterval(timer)
-        setTimeout(() => router.push(`/report/${slug}`), 300)
+        setTimeout(() => { window.location.href = 'https://pregnawell.clinic/fertility-scrore-masterclass' }, 300)
       }
     }, interval)
 
