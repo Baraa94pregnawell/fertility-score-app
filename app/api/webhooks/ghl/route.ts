@@ -11,12 +11,30 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { email, name, firstName, first_name, contact_email, contact_name } = body
 
-    // Support multiple GHL field name conventions
-    const userEmail = email || contact_email
-    const userName = name || contact_name
-    const userFirstName = firstName || first_name || userName?.split(' ')[0] || ''
+    // Log full payload temporarily so we can diagnose name issues in Railway logs
+    console.log('[GHL webhook] raw body:', JSON.stringify(body))
+
+    // GHL can send contact data at the top level (custom fields) AND/OR nested in a `contact` object (standard data)
+    const c = body.contact || {}
+
+    // Email: try custom field first, then nested contact object
+    const userEmail = body.email || body.contact_email || c.email
+
+    // Name: try every known GHL convention, then build from first+last
+    const rawName =
+      body.name ||           // custom field "name → Contact.Full Name"
+      body.contact_name ||   // alternative key
+      c.name ||              // nested contact.name
+      c.fullName ||          // nested contact.fullName
+      [c.firstName || body.firstName || body.first_name, c.lastName || body.lastName]
+        .filter(Boolean).join(' ') ||
+      ''
+
+    const userName = rawName.trim() || undefined
+
+    const userFirstName =
+      body.firstName || body.first_name || c.firstName || userName?.split(' ')[0] || ''
 
     if (!userEmail) {
       return NextResponse.json({ error: 'email is required' }, { status: 400 })
