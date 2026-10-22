@@ -29,6 +29,7 @@ export default function NumberInput({ value, onChange, placeholder, unit, min, m
 
   return (
     <div className="space-y-4">
+      <style>{`.pw-num::placeholder{font-size:13px;font-weight:400;color:#B0A0BB}`}</style>
       <div className="flex items-center gap-3">
         <input
           type="number"
@@ -37,7 +38,7 @@ export default function NumberInput({ value, onChange, placeholder, unit, min, m
           placeholder={placeholder}
           min={min}
           max={max}
-          className="flex-1 text-center text-2xl font-semibold py-4 px-4 rounded-xl border-2 outline-none transition-all"
+          className="pw-num flex-1 text-center text-2xl font-semibold py-4 px-4 rounded-xl border-2 outline-none transition-all"
           style={{
             borderColor: value ? 'var(--rose-dusty)' : '#E8DFF0',
             color: 'var(--text-dark)',

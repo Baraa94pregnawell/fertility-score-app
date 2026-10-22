@@ -52,6 +52,13 @@ export default function QuestionnaireShell({ token }: Props) {
     setAnswers(prev => ({ ...prev, [question.id]: val }))
   }, [question.id])
 
+  const handleSingleChoice = useCallback((val: string | string[]) => {
+    setAnswers(prev => ({ ...prev, [question.id]: val }))
+    if (currentIndex < visibleQuestions.length - 1) {
+      setTimeout(() => setCurrentIndex(i => i + 1), 220)
+    }
+  }, [question.id, currentIndex, visibleQuestions.length])
+
   const canProceed = () => {
     const val = answers[question.id]
     if (!question.required) return true
@@ -123,7 +130,7 @@ export default function QuestionnaireShell({ token }: Props) {
           <QuestionCard
             question={question}
             value={getValue()}
-            onChange={setValue}
+            onChange={question.type === 'single' ? handleSingleChoice : setValue}
             heightValue={heightValue}
             exclusiveOptions={EXCLUSIVE_OPTIONS[question.id] || []}
           />

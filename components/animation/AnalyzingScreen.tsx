@@ -8,7 +8,7 @@ const STEPS = [
   'تقييم الأنظمة الغذائية المتبعة وتأثيرها الهرموني...',
   'مراجعة مستويات التوتر وجودة النوم...',
   'تحليل تعرضكِ للمواد البيئية في المطبخ والعناية الشخصية...',
-  'حساب درجة الخصوبة الخاصة بكِ...',
+  'تجهيز بيانات درجة الخصوبة الخاصة بكِ للفريق المختص ...',
 ]
 
 interface Props {
@@ -87,7 +87,7 @@ export default function AnalyzingScreen({ slug }: Props) {
       {phase === 'intro' && (
         <div className="text-center">
           <p className="text-xl font-semibold animate-pulse" style={{ color: purple }}>
-            جارٍ تحليل استبيانكِ...
+            جارٍ تحليل بياناتِكِ...
           </p>
         </div>
       )}
@@ -163,7 +163,7 @@ export default function AnalyzingScreen({ slug }: Props) {
               {ringProgress}%
             </text>
           </svg>
-          <p className="text-xl font-semibold" style={{ color: purple }}>تقريركِ جاهز تقريباً...</p>
+          <p className="text-xl font-semibold" style={{ color: purple }}>جارٍ إعداد ملفكِ وإرساله لفريق الأخصائيات...</p>
         </div>
       )}
     </div>
