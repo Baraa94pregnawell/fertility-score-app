@@ -127,7 +127,7 @@ export default async function ReportPage({ params }: Props) {
       </svg>
     )
 
-    const WA_NUMBER = '97450196896'
+    const WA_NUMBER = '971502804502'
     const reportUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://score.pregnawell.com'}/report/${report.slug}`
     const waMessage = `مرحباً، أكملتُ مقياس الخصوبة الذكي وكانت نتيجتي ${report.fertilityScore} من 100، وأريد مناقشة نتيجتي معكم!\nرابط تقريري: ${reportUrl}`
     const waLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMessage)}`
