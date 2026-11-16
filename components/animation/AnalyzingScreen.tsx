@@ -62,7 +62,7 @@ export default function AnalyzingScreen({ slug }: Props) {
       setRingProgress(frame)
       if (frame >= total) {
         clearInterval(timer)
-        setTimeout(() => { window.location.href = 'https://pregnawell.clinic/fertility-scrore-masterclass' }, 300)
+        setTimeout(() => { window.location.href = 'https://clinic.pregnawell.com/fertility-scrore-masterclass-518449' }, 300)
       }
     }, interval)
 
